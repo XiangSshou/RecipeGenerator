@@ -57,4 +57,4 @@ RecipeGenerator/
 
 ## License
 
-MIT（或按需自行修改）
+MIT
