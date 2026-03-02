@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>营养搭配生成器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --surface2: #243044;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-soft: rgba(88, 166, 255, 0.15);
+      --success: #3fb950;
+      --border: #30363d;
+      --radius: 12px;
+      --shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans SC', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .page {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .card h2:not(:first-child) { margin-top: 1.5rem; }
+    .card-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .field label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .field input {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .field input::placeholder { color: var(--text-muted); opacity: 0.7; }
+    .field input[type="number"]::-webkit-inner-spin-button,
+    .field input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .field input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+    .calories-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .calories-label { font-size: 0.9rem; color: var(--text-muted); }
+    .calories-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .btn {
+      width: 100%;
+      padding: 0.9rem 1.25rem;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: #fff;
+      background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%);
+      box-shadow: 0 4px 14px rgba(46, 160, 67, 0.4);
+    }
+    .btn:active { transform: scale(0.98); }
+    .result-card { margin-top: 1.25rem; }
+    .result-card h2 { margin-bottom: 0.75rem; }
+    .result-macro {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .macro-pill {
+      padding: 0.4rem 0.75rem;
+      background: var(--surface2);
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .macro-pill span { color: var(--text); font-weight: 600; }
+    .food-list {
+      list-style: none;
+    }
+    .food-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+    .food-item:last-child { border-bottom: none; }
+    .food-name { font-weight: 500; }
+    .food-gram { color: var(--accent); font-variant-numeric: tabular-nums; }
+    .food-detail { font-size: 0.8rem; color: var(--text-muted); }
+    .error-msg {
+      padding: 1rem;
+      background: rgba(248, 81, 73, 0.12);
+      border: 1px solid rgba(248, 81, 73, 0.4);
+      border-radius: var(--radius);
+      color: #f85149;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+    }
+    .hidden { display: none !important; }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .slot-row {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr 4rem 4rem;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .slot-row .slot-num { font-size: 0.85rem; color: var(--text-muted); min-width: 3rem; }
+    .slot-row .slot-minmax { font-size: 0.75rem; color: var(--text-muted); }
+    .slot-row .slot-minmax input {
+      padding: 0.35rem 0.4rem;
+      font-size: 0.8rem;
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+    }
+    .slot-row .slot-minmax input::-webkit-inner-spin-button,
+    .slot-row .slot-minmax input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .slot-row .slot-minmax input { -moz-appearance: textfield; appearance: textfield; }
+    .slot-row select {
+      padding: 0.5rem 0.6rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .slot-row select:focus { outline: none; border-color: var(--accent); }
+    .slot-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .upload-zone {
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .upload-zone input[type=file] { display: none; }
+    .upload-zone label { cursor: pointer; color: var(--accent); }
+    .tag-list { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
+    .tag-list span { display: inline-block; background: var(--surface2); padding: 0.2rem 0.5rem; border-radius: 4px; margin-right: 0.25rem; margin-bottom: 0.25rem; }
+    .tdee-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .tdee-grid .field.wide { grid-column: span 2; }
+    .tdee-grid select {
+      padding: 0.65rem 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .tdee-grid select:focus { outline: none; border-color: var(--accent); }
+    .tdee-result { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .tdee-result .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .tdee-result .row:last-child { margin-bottom: 0; }
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div class="card" id="tdeeCard">
+      <h2>每日热量消耗</h2>
+      <p class="slot-label">根据性别、年龄、体重、身高与活动量估算基础代谢（BMR）与每日总消耗（TDEE），仅供参考。</p>
+      <div class="tdee-grid">
+        <div class="field">
+          <label>性别</label>
+          <select id="tdeeGender">
+            <option value="M">男</option>
+            <option value="F">女</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>年龄（岁）</label>
+          <input type="number" id="tdeeAge" min="1" max="120" placeholder="30">
+        </div>
+        <div class="field">
+          <label>体重（kg）</label>
+          <input type="number" id="tdeeWeight" min="1" step="0.1" placeholder="70">
+        </div>
+        <div class="field">
+          <label>身高（cm）</label>
+          <input type="number" id="tdeeHeight" min="1" step="0.1" placeholder="170">
+        </div>
+        <div class="field wide">
+          <label>活动量</label>
+          <select id="tdeeActivity">
+            <option value="1.2">久坐（几乎不运动）</option>
+            <option value="1.375">轻度（每周 1～3 天运动）</option>
+            <option value="1.55">中度（每周 3～5 天运动）</option>
+            <option value="1.725">高度（每周 6～7 天运动）</option>
+            <option value="1.9">极高（体力劳动或每天高强度）</option>
+          </select>
+        </div>
+      </div>
+      <div class="tdee-result">
+        <div class="row">
+          <span class="calories-label">基础代谢（BMR）</span>
+          <span class="calories-value" id="tdeeBmr">— kcal/天</span>
+        </div>
+        <div class="row">
+          <span class="calories-label">每日总消耗（TDEE）</span>
+          <span class="calories-value" id="tdeeTdee">— kcal/天</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>目标营养素（克）</h2>
+      <div class="inputs">
+        <div class="field">
+          <label>蛋白质</label>
+          <input type="number" id="protein" min="0" step="1" placeholder="例如 80">
+        </div>
+        <div class="field">
+          <label>碳水</label>
+          <input type="number" id="carbs" min="0" step="1" placeholder="例如 200">
+        </div>
+        <div class="field">
+          <label>脂肪</label>
+          <input type="number" id="fat" min="0" step="1" placeholder="例如 60">
+        </div>
+      </div>
+      <div class="calories-row">
+        <span class="calories-label">预估总热量</span>
+        <span class="calories-value" id="totalCal">— kcal</span>
+      </div>
+
+      <div class="card-section">
+        <h2>食物来源</h2>
+        <p class="slot-label">上传食物列表（.txt），上传后将仅使用该列表，不再使用内置默认列表。</p>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".txt,text/plain">
+          <label for="fileInput">点击选择文件</label>
+          <span id="fileHint"> 或拖拽到此处。</span>
+        </div>
+        <p class="slot-label">格式说明：每行一种食物，用英文竖线分隔，例如「名称 | 蛋白质 | 碳水 | 脂肪 | 标签1,标签2」。以 # 开头的行为注释。</p>
+        <button type="button" class="btn-secondary" id="downloadExample" style="margin-top: 0.5rem;">下载示例文件</button>
+      </div>
+
+      <div class="card-section">
+        <h2>五个搭配槽位</h2>
+        <p class="slot-label">每个槽位：选择来源与具体食物；可填最小/最大重量(g)，为空则不限制。槽位 4、5 为「随机」时可能不参与当次搭配。</p>
+        <div id="slotRows"></div>
+      </div>
+
+      <div class="card-section">
+        <button type="button" class="btn" id="generate">生成搭配</button>
+      </div>
+    </div>
+
+    <div class="card result-card hidden" id="resultCard">
+      <h2>推荐搭配</h2>
+      <div class="result-macro" id="resultMacro"></div>
+      <ul class="food-list" id="foodList"></ul>
+    </div>
+    <div class="error-msg hidden" id="errorMsg"></div>
+
+    <footer>默认数据为每 100g 生重近似值，仅供参考。</footer>
+  </div>
+
+  <script>
+    const CAL_PROTEIN = 4, CAL_CARBS = 4, CAL_FAT = 9;
+
+    // 默认食物：每 100g 生重 p/c/f（克），tags 为标签数组
+    const DEFAULT_FOODS = [
+      { name: '大米', p: 7.4, c: 77, f: 0.8, tags: ['谷物', '主食'] },
+      { name: '燕麦片', p: 13, c: 67, f: 7, tags: ['谷物', '主食'] },
+      { name: '鸡胸肉', p: 31, c: 0, f: 3.6, tags: ['蛋白质', '肉类'] },
+      { name: '鸡蛋', p: 12.7, c: 1.1, f: 9.5, tags: ['蛋白质', '蛋奶'] },
+      { name: '瘦牛肉', p: 26, c: 0, f: 15, tags: ['蛋白质', '肉类'] },
+      { name: '菠菜', p: 2.9, c: 3.6, f: 0.4, tags: ['蔬菜'] },
+      { name: '西兰花', p: 2.8, c: 6.6, f: 0.4, tags: ['蔬菜'] },
+      { name: '胡萝卜', p: 0.9, c: 9.6, f: 0.2, tags: ['蔬菜'] },
+      { name: '苹果', p: 0.3, c: 14, f: 0.2, tags: ['水果'] },
+      { name: '香蕉', p: 1.2, c: 23, f: 0.3, tags: ['水果'] },
+      { name: '黄豆(干)', p: 36, c: 25, f: 18, tags: ['豆类', '蛋白质'] },
+      { name: '红薯', p: 1.6, c: 20, f: 0.1, tags: ['主食', '蔬菜'] },
+      { name: '北豆腐', p: 8, c: 1.5, f: 4.5, tags: ['豆类', '蛋白质'] },
+      { name: '牛奶', p: 3.3, c: 4.7, f: 3.3, tags: ['蛋奶', '蛋白质'] },
+      { name: '玉米', p: 8.7, c: 66.7, f: 3.8, tags: ['谷物', '主食'] },
+      { name: '面粉', p: 11.2, c: 70, f: 0.8, tags: ['谷物', '主食'] },
+      { name: '绿豆(干)', p: 21, c: 59, f: 0.8, tags: ['豆类'] },
+      { name: '瘦猪肉', p: 21, c: 0, f: 6, tags: ['蛋白质', '肉类'] },
+      { name: '三文鱼', p: 20, c: 0, f: 13, tags: ['蛋白质', '肉类', '水产'] },
+      { name: '黄瓜', p: 0.7, c: 3.6, f: 0.1, tags: ['蔬菜'] },
+    ];
+
+    let uploadedFoods = [];
+
+    function normalizeFood(f) {
+      const tags = Array.isArray(f.tags) ? f.tags : (typeof f.tags === 'string' && f.tags ? f.tags.split(/[,，]/).map(s => s.trim()).filter(Boolean) : []);
+      return { name: String(f.name || '').trim(), p: +f.p || 0, c: +f.c || 0, f: +f.f || 0, tags };
+    }
+
+    function getFoodPool() {
+      if (uploadedFoods.length > 0) return uploadedFoods.map(normalizeFood).filter(f => f.name);
+      return DEFAULT_FOODS.map(normalizeFood).filter(f => f.name);
+    }
+
+    function getTags() {
+      const set = new Set();
+      getFoodPool().forEach(f => f.tags.forEach(t => set.add(t)));
+      return Array.from(set).sort();
+    }
+
+    function foodsByTag(tag) {
+      return getFoodPool().filter(f => f.tags.includes(tag));
+    }
+
+    const proteinEl = document.getElementById('protein');
+    const carbsEl = document.getElementById('carbs');
+    const fatEl = document.getElementById('fat');
+    const totalCalEl = document.getElementById('totalCal');
+    const generateBtn = document.getElementById('generate');
+    const resultCard = document.getElementById('resultCard');
+    const resultMacro = document.getElementById('resultMacro');
+    const foodList = document.getElementById('foodList');
+    const errorMsg = document.getElementById('errorMsg');
+    const fileInput = document.getElementById('fileInput');
+
+    function updateTdee() {
+      const gender = document.getElementById('tdeeGender').value;
+      const age = parseFloat(document.getElementById('tdeeAge').value) || 0;
+      const weight = parseFloat(document.getElementById('tdeeWeight').value) || 0;
+      const height = parseFloat(document.getElementById('tdeeHeight').value) || 0;
+      const activity = parseFloat(document.getElementById('tdeeActivity').value) || 1.2;
+      const bmrEl = document.getElementById('tdeeBmr');
+      const tdeeEl = document.getElementById('tdeeTdee');
+      if (!age || !weight || !height || weight <= 0 || height <= 0) {
+        bmrEl.textContent = '— kcal/天';
+        tdeeEl.textContent = '— kcal/天';
+        return;
+      }
+      const bmr = gender === 'M'
+        ? 10 * weight + 6.25 * height - 5 * age + 5
+        : 10 * weight + 6.25 * height - 5 * age - 161;
+      const tdee = Math.round(bmr * activity);
+      bmrEl.textContent = Math.round(bmr) + ' kcal/天';
+      tdeeEl.textContent = tdee + ' kcal/天';
+    }
+    ['tdeeGender', 'tdeeAge', 'tdeeWeight', 'tdeeHeight', 'tdeeActivity'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', updateTdee);
+      if (el) el.addEventListener('change', updateTdee);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result;
+        try {
+          const lines = text.split(/\r?\n/);
+          const parsed = [];
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) continue;
+            const parts = trimmed.split(/\s*\|\s*/).map(s => s.trim());
+            if (parts.length < 4) continue;
+            const name = parts[0];
+            const p = parseFloat(parts[1]) || 0;
+            const c = parseFloat(parts[2]) || 0;
+            const f = parseFloat(parts[3]) || 0;
+            const tags = parts[4] ? parts[4].split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+            parsed.push(normalizeFood({ name, p, c, f, tags }));
+          }
+          uploadedFoods = parsed.filter(f => f.name);
+          buildSlotRows();
+          resultCard.classList.add('hidden');
+          errorMsg.classList.add('hidden');
+        } catch (err) {
+          errorMsg.textContent = '解析失败：' + err.message;
+          errorMsg.classList.remove('hidden');
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+      e.target.value = '';
+    });
+
+    const uploadZone = document.getElementById('uploadZone');
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
+    uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = '';
+      const file = e.dataTransfer && e.dataTransfer.files[0];
+      if (file) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+
+    document.getElementById('downloadExample').addEventListener('click', () => {
+      const header = [
+        '# 食物列表（每100g 生重）',
+        '# 格式：名称 | 蛋白质(g) | 碳水(g) | 脂肪(g) | 标签(多个用逗号分隔，可选)',
+        '# 以 # 开头的行为注释，空行会被忽略',
+        '#',
+      ];
+      const foodLines = DEFAULT_FOODS.map(f => {
+        const tags = (f.tags && f.tags.length) ? f.tags.join(',') : '';
+        return `${f.name} | ${f.p} | ${f.c} | ${f.f}${tags ? ' | ' + tags : ''}`;
+      });
+      const lines = header.concat(foodLines);
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '食物列表示例.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    const SLOT_COUNT = 5;
+    let slotSourceSelects = [];
+    let slotFoodSelects = [];
+    let slotMinInputs = [];
+    let slotMaxInputs = [];
+
+    function buildSlotRows() {
+      const container = document.getElementById('slotRows');
+      container.innerHTML = '';
+      slotSourceSelects = [];
+      slotFoodSelects = [];
+      slotMinInputs = [];
+      slotMaxInputs = [];
+      const tags = getTags();
+      for (let i = 0; i < SLOT_COUNT; i++) {
+        const row = document.createElement('div');
+        row.className = 'slot-row';
+        const num = document.createElement('span');
+        num.className = 'slot-num';
+        num.textContent = '槽位 ' + (i + 1);
+        const srcSel = document.createElement('select');
+        srcSel.dataset.slot = i;
+        srcSel.setAttribute('aria-label', '槽位' + (i + 1) + '来源');
+        srcSel.innerHTML = '<option value="">随机</option>' + tags.map(t => `<option value="${t}">${t}</option>`).join('');
+        const foodSel = document.createElement('select');
+        foodSel.dataset.slot = i;
+        foodSel.setAttribute('aria-label', '槽位' + (i + 1) + '具体食物');
+        foodSel.innerHTML = '<option value="">—</option>';
+        foodSel.disabled = true;
+        const minWrap = document.createElement('div');
+        minWrap.className = 'slot-minmax';
+        const minInput = document.createElement('input');
+        minInput.type = 'number';
+        minInput.min = 0;
+        minInput.step = 1;
+        minInput.placeholder = '最小g';
+        minInput.setAttribute('aria-label', '槽位' + (i + 1) + '最小重量');
+        const maxWrap = document.createElement('div');
+        maxWrap.className = 'slot-minmax';
+        const maxInput = document.createElement('input');
+        maxInput.type = 'number';
+        maxInput.min = 0;
+        maxInput.step = 1;
+        maxInput.placeholder = '最大g';
+        maxInput.setAttribute('aria-label', '槽位' + (i + 1) + '最大重量');
+        minWrap.appendChild(minInput);
+        maxWrap.appendChild(maxInput);
+        row.appendChild(num);
+        row.appendChild(srcSel);
+        row.appendChild(foodSel);
+        row.appendChild(minWrap);
+        row.appendChild(maxWrap);
+        container.appendChild(row);
+        slotSourceSelects.push(srcSel);
+        slotFoodSelects.push(foodSel);
+        slotMinInputs.push(minInput);
+        slotMaxInputs.push(maxInput);
+      }
+      slotSourceSelects.forEach((sel, i) => {
+        sel.addEventListener('change', () => {
+          const tag = sel.value;
+          const foodSel = slotFoodSelects[i];
+          if (!tag) {
+            foodSel.innerHTML = '<option value="">—</option>';
+            foodSel.disabled = true;
+            return;
+          }
+          const list = foodsByTag(tag);
+          foodSel.innerHTML = '<option value="">随机从该标签</option>' + list.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+          foodSel.disabled = false;
+        });
+      });
+    }
+    buildSlotRows();
+
+    function updateCalories() {
+      const p = parseFloat(proteinEl.value) || 0;
+      const c = parseFloat(carbsEl.value) || 0;
+      const f = parseFloat(fatEl.value) || 0;
+      const cal = p * CAL_PROTEIN + c * CAL_CARBS + f * CAL_FAT;
+      totalCalEl.textContent = cal > 0 ? Math.round(cal) + ' kcal' : '— kcal';
+    }
+    proteinEl.addEventListener('input', updateCalories);
+    carbsEl.addEventListener('input', updateCalories);
+    fatEl.addEventListener('input', updateCalories);
+
+    function solve3(a1, a2, a3, b1, b2, b3, c1, c2, c3, t1, t2, t3) {
+      // 求解 a1*x1+a2*x2+a3*x3=t1, b1*x1+b2*x2+b3*x3=t2, c1*x1+c2*x2+c3*x3=t3
+      // A 行1=(a1,a2,a3), 行2=(b1,b2,b3), 行3=(c1,c2,c3). x = adj(A)*(t1,t2,t3)/det(A)
+      // adj(A) 第 i 行 = (x_i 对 t1,t2,t3 的系数)，即 Cramer 中 det(A_i) 按列 (t1,t2,t3) 展开的系数
+      const det = a1*(b2*c3 - b3*c2) - a2*(b1*c3 - b3*c1) + a3*(b1*c2 - b2*c1);
+      if (Math.abs(det) < 1e-10) return null;
+      const x1 = (t1*(b2*c3 - b3*c2) + t2*(a3*c2 - a2*c3) + t3*(a2*b3 - a3*b2)) / det;
+      const x2 = (t1*(b3*c1 - b1*c3) + t2*(a1*c3 - a3*c1) + t3*(a3*b1 - a1*b3)) / det;
+      const x3 = (t1*(b1*c2 - b2*c1) + t2*(a2*c1 - a1*c2) + t3*(a1*b2 - a2*b1)) / det;
+      return [x1, x2, x3];
+    }
+
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function resolveSlotToFood(slotIndex) {
+      const pool = getFoodPool();
+      if (!pool.length) return null;
+      const src = slotSourceSelects[slotIndex].value;
+      const foodSel = slotFoodSelects[slotIndex];
+      if (!src) return pickRandom(pool);
+      const byTag = foodsByTag(src);
+      if (!byTag.length) return pickRandom(pool);
+      const chosen = foodSel && foodSel.value ? foodSel.value : '';
+      if (chosen) {
+        const found = byTag.find(f => f.name === chosen);
+        if (found) return found;
+      }
+      return pickRandom(byTag);
+    }
+
+    function generate() {
+      const targetP = parseFloat(proteinEl.value) || 0;
+      const targetC = parseFloat(carbsEl.value) || 0;
+      const targetF = parseFloat(fatEl.value) || 0;
+      resultCard.classList.add('hidden');
+      errorMsg.classList.add('hidden');
+
+      if (targetP <= 0 || targetC <= 0 || targetF <= 0) {
+        errorMsg.textContent = '请填写大于 0 的蛋白质、碳水、脂肪目标（克）。';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      const pool = getFoodPool();
+      if (!pool.length) {
+        errorMsg.textContent = '当前没有可用食物，请上传食物列表。';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      let best = null;
+      let bestDiff = Infinity;
+      let noSolutionCount = 0;
+      let invalidAmountsCount = 0;
+      let lastInvalid = null;
+
+      for (let tryCount = 0; tryCount < 120; tryCount++) {
+        const selected = [];
+        const slotIndices = [];
+        const useSlot3 = (slotSourceSelects[3].value !== '') || (Math.random() < 0.5);
+        const useSlot4 = (slotSourceSelects[4].value !== '') || (Math.random() < 0.5);
+        for (let i = 0; i < SLOT_COUNT; i++) {
+          if (i === 3 && !useSlot3) continue;
+          if (i === 4 && !useSlot4) continue;
+          const f = resolveSlotToFood(i);
+          if (f) { selected.push(f); slotIndices.push(i); }
+        }
+        if (selected.length < 3) continue;
+
+        const count = selected.length;
+        let amounts;
+        if (count === 3) {
+          const [f1, f2, f3] = selected;
+          const sol = solve3(
+            f1.p, f2.p, f3.p, f1.c, f2.c, f3.c, f1.f, f2.f, f3.f,
+            targetP, targetC, targetF
+          );
+          if (!sol) {
+            noSolutionCount++;
+            continue;
+          }
+          amounts = sol.map(x => x * 100);
+        } else if (count === 4) {
+          const fix = 20 + Math.random() * 60;
+          const f4 = selected[3];
+          const rP = targetP - (f4.p * fix / 100);
+          const rC = targetC - (f4.c * fix / 100);
+          const rF = targetF - (f4.f * fix / 100);
+          const [f1, f2, f3] = selected.slice(0, 3);
+          const sol = solve3(
+            f1.p, f2.p, f3.p, f1.c, f2.c, f3.c, f1.f, f2.f, f3.f,
+            rP, rC, rF
+          );
+          if (!sol) {
+            noSolutionCount++;
+            continue;
+          }
+          amounts = sol.map(x => x * 100).concat(fix);
+        } else {
+          const fix4 = 20 + Math.random() * 60;
+          const fix5 = 20 + Math.random() * 60;
+          const f4 = selected[3];
+          const f5 = selected[4];
+          const rP = targetP - (f4.p * fix4 / 100 + f5.p * fix5 / 100);
+          const rC = targetC - (f4.c * fix4 / 100 + f5.c * fix5 / 100);
+          const rF = targetF - (f4.f * fix4 / 100 + f5.f * fix5 / 100);
+          const [f1, f2, f3] = selected.slice(0, 3);
+          const sol = solve3(
+            f1.p, f2.p, f3.p, f1.c, f2.c, f3.c, f1.f, f2.f, f3.f,
+            rP, rC, rF
+          );
+          if (!sol) {
+            noSolutionCount++;
+            continue;
+          }
+          amounts = sol.map(x => x * 100).concat(fix4, fix5);
+        }
+        let sumP = 0, sumC = 0, sumF = 0;
+        for (let i = 0; i < selected.length; i++) {
+          const g = amounts[i] / 100;
+          sumP += selected[i].p * g;
+          sumC += selected[i].c * g;
+          sumF += selected[i].f * g;
+        }
+        const withinLimits = amounts.every((a, j) => {
+          const slotIdx = slotIndices[j];
+          const minVal = slotMinInputs[slotIdx].value.trim();
+          const maxVal = slotMaxInputs[slotIdx].value.trim();
+          const min = minVal !== '' && !isNaN(parseFloat(minVal)) ? parseFloat(minVal) : 0;
+          const max = maxVal !== '' && !isNaN(parseFloat(maxVal)) ? parseFloat(maxVal) : 1e9;
+          return a >= min && a <= max;
+        });
+        if (!withinLimits) {
+          invalidAmountsCount++;
+          const diff = Math.abs(sumP - targetP) + Math.abs(sumC - targetC) + Math.abs(sumF - targetF);
+          lastInvalid = { selected: selected.map(f => f.name), amounts: amounts.slice(), diff, sumP, sumC, sumF };
+          continue;
+        }
+        const diff = Math.abs(sumP - targetP) + Math.abs(sumC - targetC) + Math.abs(sumF - targetF);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          best = { selected, amounts, sumP, sumC, sumF };
+        }
+        if (diff < 1) break;
+      }
+
+      if (!best) {
+        errorMsg.textContent = '未找到合适搭配，请调整目标或槽位选择后重试。';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      const { selected: sel, amounts } = best;
+      let sumP = 0, sumC = 0, sumF = 0;
+      for (let i = 0; i < sel.length; i++) {
+        const g = amounts[i] / 100;
+        sumP += sel[i].p * g;
+        sumC += sel[i].c * g;
+        sumF += sel[i].f * g;
+      }
+      const totalCal = sumP * CAL_PROTEIN + sumC * CAL_CARBS + sumF * CAL_FAT;
+      resultMacro.innerHTML = `
+        <span class="macro-pill">蛋白质 <span>${sumP.toFixed(1)}</span> g</span>
+        <span class="macro-pill">碳水 <span>${sumC.toFixed(1)}</span> g</span>
+        <span class="macro-pill">脂肪 <span>${sumF.toFixed(1)}</span> g</span>
+        <span class="macro-pill">热量 <span>${Math.round(totalCal)}</span> kcal</span>
+      `;
+      foodList.innerHTML = sel.map((food, i) => {
+        const g = amounts[i];
+        const p = (food.p * g / 100).toFixed(1);
+        const c = (food.c * g / 100).toFixed(1);
+        const f = (food.f * g / 100).toFixed(1);
+        return `
+          <li class="food-item">
+            <span class="food-name">${food.name}</span>
+            <span class="food-gram">${Math.round(g)} g</span>
+            <span class="food-detail">P${p} C${c} F${f}</span>
+          </li>
+        `;
+      }).join('');
+      resultCard.classList.remove('hidden');
+    }
+
+    generateBtn.addEventListener('click', generate);
+    updateCalories();
+    updateTdee();
+  </script>
+</body>
+</html>
