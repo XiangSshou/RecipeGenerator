@@ -71,6 +71,11 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 0.75rem;
     }
+    .inputs-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
     .field {
       display: flex;
       flex-direction: column;
@@ -95,6 +100,11 @@
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .field input:disabled {
+      background: var(--bg);
+      color: var(--text-muted);
+      cursor: not-allowed;
     }
     .field input::placeholder { color: var(--text-muted); opacity: 0.7; }
     .field input[type="number"]::-webkit-inner-spin-button,
@@ -307,6 +317,32 @@
           <span class="calories-label">每日总消耗（TDEE）</span>
           <span class="calories-value" id="tdeeTdee">— kcal/天</span>
         </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>能量与三大营养素换算</h2>
+      <p class="slot-label">在四个输入中任意填入三个，自动计算剩余一个；清空任意一项后四个都可再次编辑。</p>
+      <div class="inputs-4">
+        <div class="field">
+          <label>能量（kcal）</label>
+          <input type="number" id="emEnergy" min="0" step="1" placeholder="例如 2000">
+        </div>
+        <div class="field">
+          <label>蛋白质（g）</label>
+          <input type="number" id="emProtein" min="0" step="0.1" placeholder="例如 100">
+        </div>
+        <div class="field">
+          <label>碳水（g）</label>
+          <input type="number" id="emCarbs" min="0" step="0.1" placeholder="例如 200">
+        </div>
+        <div class="field">
+          <label>脂肪（g）</label>
+          <input type="number" id="emFat" min="0" step="0.1" placeholder="例如 60">
+        </div>
+      </div>
+      <div class="card-section">
+        <button type="button" class="btn-secondary" id="applyToTargetMacros">将当前三大营养素填入下方目标</button>
       </div>
     </div>
 
@@ -563,6 +599,11 @@
     const foodList = document.getElementById('foodList');
     const errorMsg = document.getElementById('errorMsg');
     const fileInput = document.getElementById('fileInput');
+    const emEnergyEl = document.getElementById('emEnergy');
+    const emProteinEl = document.getElementById('emProtein');
+    const emCarbsEl = document.getElementById('emCarbs');
+    const emFatEl = document.getElementById('emFat');
+    const applyToTargetMacrosBtn = document.getElementById('applyToTargetMacros');
 
     function updateTdee() {
       const gender = document.getElementById('tdeeGender').value;
@@ -794,6 +835,103 @@
       buildSlotRows();
       setSlotState(state);
     });
+
+    let emAutoLockedIndex = null; // 0: 能量, 1: 蛋白质, 2: 碳水, 3: 脂肪
+    const emFields = [emEnergyEl, emProteinEl, emCarbsEl, emFatEl];
+
+    function updateEnergyMacroTool() {
+      if (!emFields.every(el => el)) return;
+      const values = emFields.map(el => el.value.trim());
+      const emptyIdx = [];
+      for (let i = 0; i < values.length; i++) {
+        if (values[i] === '') emptyIdx.push(i);
+      }
+
+      // 若当前有锁定字段且出现空值，视为用户在修改，解除锁定、清空原先锁定的值并全部可编辑
+      if (emAutoLockedIndex !== null && emptyIdx.length > 0) {
+        const wasLocked = emAutoLockedIndex;
+        emAutoLockedIndex = null;
+        emFields.forEach(el => el.disabled = false);
+        emFields[wasLocked].value = '';
+        return;
+      }
+
+      // 少于 3 个已填或多于 1 个空：不计算，全部可编辑
+      if (emptyIdx.length >= 2) {
+        emAutoLockedIndex = null;
+        emFields.forEach(el => el.disabled = false);
+        return;
+      }
+
+      const nums = values.map(v => v === '' ? NaN : parseFloat(v));
+
+      // 所有都已填
+      if (emptyIdx.length === 0) {
+        if (emAutoLockedIndex === null) {
+          emFields.forEach(el => el.disabled = false);
+          return;
+        }
+        // 重新根据其他三个更新被锁定字段
+        const i = emAutoLockedIndex;
+        if (nums.some((n, idx) => idx !== i && (isNaN(n) || !isFinite(n)))) return;
+        let result;
+        const E = nums[0], P = nums[1], C = nums[2], F = nums[3];
+        if (i === 0) {
+          result = P * CAL_PROTEIN + C * CAL_CARBS + F * CAL_FAT;
+        } else if (i === 1) {
+          result = (E - C * CAL_CARBS - F * CAL_FAT) / CAL_PROTEIN;
+        } else if (i === 2) {
+          result = (E - P * CAL_PROTEIN - F * CAL_FAT) / CAL_CARBS;
+        } else {
+          result = (E - P * CAL_PROTEIN - C * CAL_CARBS) / CAL_FAT;
+        }
+        if (!isFinite(result)) return;
+        if (result < 0) result = 0;
+        emFields[i].value = result.toFixed(i === 0 ? 0 : 1);
+        emFields.forEach((el, idx) => { el.disabled = idx === i; });
+        return;
+      }
+
+      // 恰好一个为空：根据其他三个计算该字段
+      const missing = emptyIdx[0];
+      if (nums.some((n, idx) => idx !== missing && (isNaN(n) || !isFinite(n)))) {
+        emAutoLockedIndex = null;
+        emFields.forEach(el => el.disabled = false);
+        return;
+      }
+
+      let result;
+      const E = nums[0], P = nums[1], C = nums[2], F = nums[3];
+      if (missing === 0) {
+        result = P * CAL_PROTEIN + C * CAL_CARBS + F * CAL_FAT;
+      } else if (missing === 1) {
+        result = (E - C * CAL_CARBS - F * CAL_FAT) / CAL_PROTEIN;
+      } else if (missing === 2) {
+        result = (E - P * CAL_PROTEIN - F * CAL_FAT) / CAL_CARBS;
+      } else {
+        result = (E - P * CAL_PROTEIN - C * CAL_CARBS) / CAL_FAT;
+      }
+      if (!isFinite(result)) return;
+      if (result < 0) result = 0;
+      emFields[missing].value = result.toFixed(missing === 0 ? 0 : 1);
+      emAutoLockedIndex = missing;
+      emFields.forEach((el, idx) => { el.disabled = idx === missing; });
+    }
+
+    emFields.forEach(el => {
+      if (!el) return;
+      el.addEventListener('input', updateEnergyMacroTool);
+    });
+
+    if (applyToTargetMacrosBtn) {
+      applyToTargetMacrosBtn.addEventListener('click', () => {
+        // 只同步三大营养素到下方目标营养素输入框
+        if (emProteinEl) proteinEl.value = emProteinEl.value;
+        if (emCarbsEl) carbsEl.value = emCarbsEl.value;
+        if (emFatEl) fatEl.value = emFatEl.value;
+        updateCalories();
+      });
+    }
 
     function updateCalories() {
       const p = parseFloat(proteinEl.value) || 0;
