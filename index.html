@@ -195,6 +195,9 @@
       align-items: center;
       margin-bottom: 0.5rem;
     }
+    .slot-row.has-remove {
+      grid-template-columns: auto 1fr 1fr 4rem 4rem auto;
+    }
     .slot-row .slot-num { font-size: 0.85rem; color: var(--text-muted); min-width: 3rem; }
     .slot-row .slot-minmax { font-size: 0.75rem; color: var(--text-muted); }
     .slot-row .slot-minmax input {
@@ -341,9 +344,12 @@
       </div>
 
       <div class="card-section">
-        <h2>五个搭配槽位</h2>
-        <p class="slot-label">每个槽位：选择来源与具体食物。最小/最大重量(g)：都填则在区间内随机；只填一边则在该边基础上 200g 范围内随机，且≥0。有填重量的槽位优先作为固定量参与计算，顺序从上到下。槽位 4、5 为「随机」时可能不参与当次搭配。</p>
+        <h2>食物搭配槽位</h2>
+        <p class="slot-label">至少 3 个槽位，可点击「添加槽位」增加。每个槽位：选择来源与具体食物。最小/最大重量(g)：都填则在区间内随机；只填一边则在该边基础上 200g 范围内随机。选择 fix 时优先使用有重量限制的槽位；剩余 3 个槽位用于求解，若其有重量要求则解会校验是否满足。</p>
         <div id="slotRows"></div>
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+          <button type="button" class="btn-secondary" id="addSlot">添加槽位</button>
+        </div>
       </div>
 
       <div class="card-section">
@@ -653,11 +659,46 @@
       URL.revokeObjectURL(a.href);
     });
 
-    const SLOT_COUNT = 5;
+    const SLOT_COUNT_MIN = 3;
+    let slotCount = 3;
     let slotSourceSelects = [];
     let slotFoodSelects = [];
     let slotMinInputs = [];
     let slotMaxInputs = [];
+
+    /** 收集当前所有槽位的来源、食物、最小/最大重量，用于在重建行后恢复 */
+    function getSlotState() {
+      const state = [];
+      for (let i = 0; i < slotSourceSelects.length; i++) {
+        state.push({
+          source: slotSourceSelects[i].value,
+          food: slotFoodSelects[i].value,
+          min: slotMinInputs[i].value,
+          max: slotMaxInputs[i].value,
+        });
+      }
+      return state;
+    }
+
+    /** 将之前保存的槽位状态应用到当前行（在 buildSlotRows 之后调用） */
+    function setSlotState(state) {
+      const tags = getTags();
+      for (let i = 0; i < state.length && i < slotSourceSelects.length; i++) {
+        const s = state[i];
+        slotSourceSelects[i].value = s.source;
+        if (s.source) {
+          const list = foodsByTag(s.source);
+          slotFoodSelects[i].innerHTML = '<option value="">随机</option>' + list.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+          slotFoodSelects[i].disabled = false;
+          slotFoodSelects[i].value = s.food || '';
+        } else {
+          slotFoodSelects[i].innerHTML = '<option value="">—</option>';
+          slotFoodSelects[i].disabled = true;
+        }
+        slotMinInputs[i].value = s.min || '';
+        slotMaxInputs[i].value = s.max || '';
+      }
+    }
 
     function buildSlotRows() {
       const container = document.getElementById('slotRows');
@@ -667,7 +708,7 @@
       slotMinInputs = [];
       slotMaxInputs = [];
       const tags = getTags();
-      for (let i = 0; i < SLOT_COUNT; i++) {
+      for (let i = 0; i < slotCount; i++) {
         const row = document.createElement('div');
         row.className = 'slot-row';
         const num = document.createElement('span');
@@ -705,6 +746,25 @@
         row.appendChild(foodSel);
         row.appendChild(minWrap);
         row.appendChild(maxWrap);
+        if (slotCount > SLOT_COUNT_MIN) {
+          row.classList.add('has-remove');
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'btn-secondary';
+          removeBtn.textContent = '删除';
+          removeBtn.setAttribute('aria-label', '删除槽位' + (i + 1));
+          removeBtn.dataset.slot = i;
+          removeBtn.addEventListener('click', () => {
+            if (slotCount <= SLOT_COUNT_MIN) return;
+            const removeIndex = i;
+            const state = getSlotState();
+            state.splice(removeIndex, 1);
+            slotCount--;
+            buildSlotRows();
+            setSlotState(state);
+          });
+          row.appendChild(removeBtn);
+        }
         container.appendChild(row);
         slotSourceSelects.push(srcSel);
         slotFoodSelects.push(foodSel);
@@ -721,12 +781,19 @@
             return;
           }
           const list = foodsByTag(tag);
-          foodSel.innerHTML = '<option value="">随机从该标签</option>' + list.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+          foodSel.innerHTML = '<option value="">随机</option>' + list.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
           foodSel.disabled = false;
         });
       });
     }
     buildSlotRows();
+
+    document.getElementById('addSlot').addEventListener('click', () => {
+      const state = getSlotState();
+      slotCount++;
+      buildSlotRows();
+      setSlotState(state);
+    });
 
     function updateCalories() {
       const p = parseFloat(proteinEl.value) || 0;
@@ -795,6 +862,44 @@
       return low + Math.random() * (high - low);
     }
 
+    /** 返回槽位的重量范围 { min, max }，用于校验解是否在范围内；无限制时返回 null。 */
+    function getSlotWeightRange(slotIndex) {
+      const minVal = slotMinInputs[slotIndex].value.trim();
+      const maxVal = slotMaxInputs[slotIndex].value.trim();
+      const hasMin = minVal !== '';
+      const hasMax = maxVal !== '';
+      if (!hasMin && !hasMax) return null;
+      let low, high;
+      if (hasMin && hasMax) {
+        const a = parseFloat(minVal);
+        const b = parseFloat(maxVal);
+        const aOk = !isNaN(a);
+        const bOk = !isNaN(b);
+        if (!aOk && !bOk) return null;
+        if (aOk && bOk) {
+          low = Math.max(0, Math.min(a, b));
+          high = Math.max(a, b);
+        } else if (aOk) {
+          low = Math.max(0, a);
+          high = a + 200;
+        } else {
+          low = Math.max(0, b - 200);
+          high = b;
+        }
+      } else if (hasMin) {
+        const min = parseFloat(minVal);
+        if (isNaN(min)) return null;
+        low = Math.max(0, min);
+        high = min + 200;
+      } else {
+        const max = parseFloat(maxVal);
+        if (isNaN(max)) return null;
+        low = Math.max(0, max - 200);
+        high = max;
+      }
+      return { min: low, max: high };
+    }
+
     function resolveSlotToFood(slotIndex) {
       const pool = getFoodPool();
       if (!pool.length) return null;
@@ -831,159 +936,116 @@
         return;
       }
 
+      const N = slotSourceSelects.length;
+      if (N < 3) {
+        errorMsg.textContent = '至少需要 3 个食物槽位。';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      const totalCal = targetP * CAL_PROTEIN + targetC * CAL_CARBS + targetF * CAL_FAT;
       let best = null;
       let bestDiff = Infinity;
-      let noSolutionCount = 0;
-      let invalidAmountsCount = 0;
-      let lastInvalid = null;
+      const maxTries = 200;
 
-      for (let tryCount = 0; tryCount < 120; tryCount++) {
-        const slotIndices = [];
-        const forced3 = slotSourceSelects[3].value !== '';
-        const forced4 = slotSourceSelects[4].value !== '';
-        let useSlot3, useSlot4;
-        if (forced3 && forced4) {
-          useSlot3 = true;
-          useSlot4 = true;
-        } else if (forced3) {
-          useSlot3 = true;
-          useSlot4 = Math.random() < 0.5;
-        } else if (forced4) {
-          useSlot3 = Math.random() < 0.5;
-          useSlot4 = true;
-        } else {
-          const r = Math.random();
-          if (r < 1 / 3) {
-            useSlot3 = false;
-            useSlot4 = false;
-          } else if (r < 2 / 3) {
-            if (Math.random() < 0.5) {
-              useSlot3 = true;
-              useSlot4 = false;
-            } else {
-              useSlot3 = false;
-              useSlot4 = true;
-            }
+      for (let tryCount = 0; tryCount < maxTries; tryCount++) {
+        // 1. 解析所有 N 个槽位的食物
+        const participantsInSlotOrder = [];
+        for (let i = 0; i < N; i++) {
+          const food = resolveSlotToFood(i);
+          if (!food) continue;
+          const range = getSlotWeightRange(i);
+          const hasWeightLimit = range !== null;
+          participantsInSlotOrder.push({
+            slotIndex: i,
+            food,
+            hasWeightLimit,
+            range,
+          });
+        }
+        if (participantsInSlotOrder.length !== N) continue;
+
+        // 2. 选择 fix：优先有重量限制的槽位，取前 N-3 个；剩余 3 个用于求解
+        const sorted = participantsInSlotOrder.slice().sort((a, b) => {
+          if (a.hasWeightLimit !== b.hasWeightLimit) return a.hasWeightLimit ? -1 : 1;
+          return a.slotIndex - b.slotIndex;
+        });
+        const fixParticipants = sorted.slice(0, N - 3);
+        const variableParticipants = sorted.slice(N - 3, N);
+
+        // 3. 为 fix 分配克数：有重量限制的用 getSpecifiedWeight；无限制的按总热量 0.2/n～1.8/n 换算成克数
+        const fixAmounts = [];
+        let fixP = 0, fixC = 0, fixF = 0;
+        for (const p of fixParticipants) {
+          let amount;
+          if (p.hasWeightLimit) {
+            amount = getSpecifiedWeight(p.slotIndex);
+            if (amount == null) continue;
           } else {
-            useSlot3 = true;
-            useSlot4 = true;
+            const calPer100 = p.food.p * CAL_PROTEIN + p.food.c * CAL_CARBS + p.food.f * CAL_FAT;
+            const calMin = totalCal * (0.2 / N);
+            const calMax = totalCal * (1.8 / N);
+            const targetCal = calMin + Math.random() * (calMax - calMin);
+            if (calPer100 < 1e-6) amount = 50;
+            else amount = (targetCal * 100) / calPer100;
+            amount = Math.max(0, amount);
+          }
+          fixAmounts.push({ slotIndex: p.slotIndex, amount });
+          fixP += p.food.p * amount / 100;
+          fixC += p.food.c * amount / 100;
+          fixF += p.food.f * amount / 100;
+        }
+        const rP = targetP - fixP, rC = targetC - fixC, rF = targetF - fixF;
+        // 若有营养物质超出范围（剩余目标非正），进行下次计算
+        if (rP <= 0 || rC <= 0 || rF <= 0) continue;
+
+        // 4. 用剩余 3 个槽位求解
+        const [f1, f2, f3] = variableParticipants.map(p => p.food);
+        const sol = solve3(f1.p, f2.p, f3.p, f1.c, f2.c, f3.c, f1.f, f2.f, f3.f, rP, rC, rF);
+        if (!sol) continue;
+        const solGrams = sol.map(x => x * 100);
+        if (solGrams.some(g => g < 0)) continue;
+
+        // 5. 若三个变量槽位有重量要求，判断解是否满足；不满足则重新计算
+        let weightOk = true;
+        for (let i = 0; i < 3; i++) {
+          const p = variableParticipants[i];
+          if (p.range) {
+            const g = solGrams[i];
+            if (g < p.range.min || g > p.range.max) {
+              weightOk = false;
+              break;
+            }
           }
         }
-        const participants = [];
-        for (let i = 0; i < SLOT_COUNT; i++) {
-          if (i === 3 && !useSlot3) continue;
-          if (i === 4 && !useSlot4) continue;
-          const f = resolveSlotToFood(i);
-          if (f) {
-            slotIndices.push(i);
-            const fixedWeight = getSpecifiedWeight(i);
-            participants.push({ slotIndex: i, food: f, fixedWeight });
+        if (!weightOk) continue;
+
+        // 6. 按槽位顺序组装结果并校验所有槽位重量范围
+        const amountBySlot = {};
+        fixAmounts.forEach(({ slotIndex, amount }) => { amountBySlot[slotIndex] = amount; });
+        variableParticipants.forEach((p, i) => { amountBySlot[p.slotIndex] = solGrams[i]; });
+        const selected = [];
+        const amounts = [];
+        for (let i = 0; i < N; i++) {
+          const p = participantsInSlotOrder.find(x => x.slotIndex === i);
+          if (!p) continue;
+          const amount = amountBySlot[i];
+          const range = getSlotWeightRange(i);
+          if (range && (amount < range.min || amount > range.max)) {
+            weightOk = false;
+            break;
           }
+          selected.push(p.food);
+          amounts.push(amount);
         }
-        if (participants.length < 3) continue;
+        if (!weightOk) continue;
 
-        const fixList = participants.filter(p => p.fixedWeight != null).sort((a, b) => a.slotIndex - b.slotIndex);
-        const variableList = participants.filter(p => p.fixedWeight == null).sort((a, b) => a.slotIndex - b.slotIndex);
-
-        const count = participants.length;
-        let amounts;
-
-        // 仅当存在至少一个「指定重量」槽位时，才用指定重量作 fix；否则用原逻辑（前 3 求解、其余随机 fix 并从目标中扣除），保证 4/5 槽位都参与
-        if (fixList.length > 0 && variableList.length >= 3) {
-          // 优先使用「指定重量」槽位作为 fix，顺序从上到下；其余前 3 个参与求解
-          const fixP = fixList.reduce((s, p) => s + p.food.p * p.fixedWeight / 100, 0);
-          const fixC = fixList.reduce((s, p) => s + p.food.c * p.fixedWeight / 100, 0);
-          const fixF = fixList.reduce((s, p) => s + p.food.f * p.fixedWeight / 100, 0);
-          const rP = targetP - fixP, rC = targetC - fixC, rF = targetF - fixF;
-          const [f1, f2, f3] = variableList.slice(0, 3).map(p => p.food);
-          const sol = solve3(f1.p, f2.p, f3.p, f1.c, f2.c, f3.c, f1.f, f2.f, f3.f, rP, rC, rF);
-          if (!sol) {
-            noSolutionCount++;
-            continue;
-          }
-          const solAmounts = sol.map(x => x * 100);
-          amounts = [];
-          for (const p of participants) {
-            if (p.fixedWeight != null) {
-              amounts.push(p.fixedWeight);
-            } else {
-              const vIdx = variableList.findIndex(v => v.slotIndex === p.slotIndex);
-              if (vIdx < 3) amounts.push(solAmounts[vIdx]);
-              else amounts.push(30 + Math.random() * 170);
-            }
-          }
-        } else {
-          // 可参与求解的不足 3 个，回退为原逻辑：随机 fix
-          const selected = participants.map(p => p.food);
-          if (count === 3) {
-            const [f1, f2, f3] = selected;
-            const sol = solve3(
-              f1.p, f2.p, f3.p, f1.c, f2.c, f3.c, f1.f, f2.f, f3.f,
-              targetP, targetC, targetF
-            );
-            if (!sol) {
-              noSolutionCount++;
-              continue;
-            }
-            amounts = sol.map(x => x * 100);
-          } else if (count === 4) {
-            const fix = 30 + Math.random() * 170;
-            const f4 = selected[3];
-            const rP = targetP - (f4.p * fix / 100);
-            const rC = targetC - (f4.c * fix / 100);
-            const rF = targetF - (f4.f * fix / 100);
-            const [f1, f2, f3] = selected.slice(0, 3);
-            const sol = solve3(
-              f1.p, f2.p, f3.p, f1.c, f2.c, f3.c, f1.f, f2.f, f3.f,
-              rP, rC, rF
-            );
-            if (!sol) {
-              noSolutionCount++;
-              continue;
-            }
-            amounts = sol.map(x => x * 100).concat(fix);
-          } else {
-            const fix4 = 30 + Math.random() * 170;
-            const fix5 = 30 + Math.random() * 170;
-            const f4 = selected[3];
-            const f5 = selected[4];
-            const rP = targetP - (f4.p * fix4 / 100 + f5.p * fix5 / 100);
-            const rC = targetC - (f4.c * fix4 / 100 + f5.c * fix5 / 100);
-            const rF = targetF - (f4.f * fix4 / 100 + f5.f * fix5 / 100);
-            const [f1, f2, f3] = selected.slice(0, 3);
-            const sol = solve3(
-              f1.p, f2.p, f3.p, f1.c, f2.c, f3.c, f1.f, f2.f, f3.f,
-              rP, rC, rF
-            );
-            if (!sol) {
-              noSolutionCount++;
-              continue;
-            }
-            amounts = sol.map(x => x * 100).concat(fix4, fix5);
-          }
-        }
-
-        const selected = participants.map(p => p.food);
         let sumP = 0, sumC = 0, sumF = 0;
         for (let i = 0; i < selected.length; i++) {
           const g = amounts[i] / 100;
           sumP += selected[i].p * g;
           sumC += selected[i].c * g;
           sumF += selected[i].f * g;
-        }
-        const withinLimits = amounts.every((a, j) => {
-          const slotIdx = slotIndices[j];
-          const minVal = slotMinInputs[slotIdx].value.trim();
-          const maxVal = slotMaxInputs[slotIdx].value.trim();
-          const min = minVal !== '' && !isNaN(parseFloat(minVal)) ? parseFloat(minVal) : 0;
-          const max = maxVal !== '' && !isNaN(parseFloat(maxVal)) ? parseFloat(maxVal) : 1e9;
-          return a >= min && a <= max;
-        });
-        if (!withinLimits) {
-          invalidAmountsCount++;
-          const diff = Math.abs(sumP - targetP) + Math.abs(sumC - targetC) + Math.abs(sumF - targetF);
-          lastInvalid = { selected: selected.map(f => f.name), amounts: amounts.slice(), diff, sumP, sumC, sumF };
-          continue;
         }
         const diff = Math.abs(sumP - targetP) + Math.abs(sumC - targetC) + Math.abs(sumF - targetF);
         if (diff < bestDiff) {
@@ -1007,12 +1069,12 @@
         sumC += sel[i].c * g;
         sumF += sel[i].f * g;
       }
-      const totalCal = sumP * CAL_PROTEIN + sumC * CAL_CARBS + sumF * CAL_FAT;
+      const totalCalOut = sumP * CAL_PROTEIN + sumC * CAL_CARBS + sumF * CAL_FAT;
       resultMacro.innerHTML = `
         <span class="macro-pill">蛋白质 <span>${sumP.toFixed(1)}</span> g</span>
         <span class="macro-pill">碳水 <span>${sumC.toFixed(1)}</span> g</span>
         <span class="macro-pill">脂肪 <span>${sumF.toFixed(1)}</span> g</span>
-        <span class="macro-pill">热量 <span>${Math.round(totalCal)}</span> kcal</span>
+        <span class="macro-pill">热量 <span>${Math.round(totalCalOut)}</span> kcal</span>
       `;
       foodList.innerHTML = sel.map((food, i) => {
         const g = amounts[i];
