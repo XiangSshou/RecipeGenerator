@@ -960,8 +960,18 @@
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    /** 若该槽位填了最小或最大任一边，视为「指定重量」槽位，在范围内随机返回克数（≥0）；两边都未填返回 null。只填一边时可变范围 200g。 */
-    function getSpecifiedWeight(slotIndex) {
+    /** 该食物达到目标蛋白质、碳水、脂肪所需重量（每项 = 目标克数 * 100 / 每100g含量），取三者最小为 max_m。 */
+    function maxWeightForTargets(food, targetP, targetC, targetF) {
+      const wP = food.p > 0 ? (targetP * 100 / food.p) : Infinity;
+      const wC = food.c > 0 ? (targetC * 100 / food.c) : Infinity;
+      const wF = food.f > 0 ? (targetF * 100 / food.f) : Infinity;
+      const m = Math.min(wP, wC, wF);
+      return isFinite(m) ? m : Infinity;
+    }
+
+    /** 若该槽位填了最小或最大任一边，视为「指定重量」槽位，在范围内随机返回克数（≥0）；两边都未填返回 null。
+     *  只填一边时：先算该食物达到目标三大营养素所需重量的最小值 max_m；只填最大值时范围为 [0, min(用户最大值, max_m)]，只填最小值时范围为 [用户最小值, max_m]。 */
+    function getSpecifiedWeight(slotIndex, food, targetP, targetC, targetF) {
       const minVal = slotMinInputs[slotIndex].value.trim();
       const maxVal = slotMaxInputs[slotIndex].value.trim();
       const hasMin = minVal !== '';
@@ -988,20 +998,35 @@
       } else if (hasMin) {
         const min = parseFloat(minVal);
         if (isNaN(min)) return null;
-        low = Math.max(0, min);
-        high = min + 200;
+        if (food == null || targetP == null || targetC == null || targetF == null) {
+          low = Math.max(0, min);
+          high = min + 200;
+        } else {
+          const max_m = maxWeightForTargets(food, targetP, targetC, targetF);
+          low = Math.max(0, min);
+          high = max_m;
+          if (high < low) return null;
+        }
       } else {
         const max = parseFloat(maxVal);
         if (isNaN(max)) return null;
-        low = Math.max(0, max - 200);
-        high = max;
+        if (food == null || targetP == null || targetC == null || targetF == null) {
+          low = Math.max(0, max - 200);
+          high = max;
+        } else {
+          const max_m = maxWeightForTargets(food, targetP, targetC, targetF);
+          high = Math.min(max, max_m);
+          low = 0;
+          if (high <= 0) return null;
+        }
       }
       if (high <= low) return low;
       return low + Math.random() * (high - low);
     }
 
-    /** 返回槽位的重量范围 { min, max }，用于校验解是否在范围内；无限制时返回 null。 */
-    function getSlotWeightRange(slotIndex) {
+    /** 返回槽位的重量范围 { min, max }，用于校验解是否在范围内；无限制时返回 null。
+     *  只填最大时范围为 [0, min(用户最大值, max_m)]，只填最小时范围为 [用户最小值, max_m]。 */
+    function getSlotWeightRange(slotIndex, food, targetP, targetC, targetF) {
       const minVal = slotMinInputs[slotIndex].value.trim();
       const maxVal = slotMaxInputs[slotIndex].value.trim();
       const hasMin = minVal !== '';
@@ -1027,13 +1052,27 @@
       } else if (hasMin) {
         const min = parseFloat(minVal);
         if (isNaN(min)) return null;
-        low = Math.max(0, min);
-        high = min + 200;
+        if (food == null || targetP == null || targetC == null || targetF == null) {
+          low = Math.max(0, min);
+          high = min + 200;
+        } else {
+          const max_m = maxWeightForTargets(food, targetP, targetC, targetF);
+          low = Math.max(0, min);
+          high = max_m;
+          if (high < low) return { min: low, max: low - 1 };
+        }
       } else {
         const max = parseFloat(maxVal);
         if (isNaN(max)) return null;
-        low = Math.max(0, max - 200);
-        high = max;
+        if (food == null || targetP == null || targetC == null || targetF == null) {
+          low = Math.max(0, max - 200);
+          high = max;
+        } else {
+          const max_m = maxWeightForTargets(food, targetP, targetC, targetF);
+          high = Math.min(max, max_m);
+          low = 0;
+          if (high <= 0) return { min: 0, max: -1 };
+        }
       }
       return { min: low, max: high };
     }
@@ -1092,7 +1131,7 @@
         for (let i = 0; i < N; i++) {
           const food = resolveSlotToFood(i);
           if (!food) continue;
-          const range = getSlotWeightRange(i);
+          const range = getSlotWeightRange(i, food, targetP, targetC, targetF);
           const hasWeightLimit = range !== null;
           participantsInSlotOrder.push({
             slotIndex: i,
@@ -1114,11 +1153,15 @@
         // 3. 为 fix 分配克数：有重量限制的用 getSpecifiedWeight；无限制的按总热量 0.2/n～1.8/n 换算成克数
         const fixAmounts = [];
         let fixP = 0, fixC = 0, fixF = 0;
+        let fixSkip = false;
         for (const p of fixParticipants) {
           let amount;
           if (p.hasWeightLimit) {
-            amount = getSpecifiedWeight(p.slotIndex);
-            if (amount == null) continue;
+            amount = getSpecifiedWeight(p.slotIndex, p.food, targetP, targetC, targetF);
+            if (amount == null) {
+              fixSkip = true;
+              break;
+            }
           } else {
             const calPer100 = p.food.p * CAL_PROTEIN + p.food.c * CAL_CARBS + p.food.f * CAL_FAT;
             const calMin = totalCal * (0.2 / N);
@@ -1133,6 +1176,7 @@
           fixC += p.food.c * amount / 100;
           fixF += p.food.f * amount / 100;
         }
+        if (fixSkip) continue;
         const rP = targetP - fixP, rC = targetC - fixC, rF = targetF - fixF;
         // 若有营养物质超出范围（剩余目标非正），进行下次计算
         if (rP <= 0 || rC <= 0 || rF <= 0) continue;
@@ -1168,7 +1212,7 @@
           const p = participantsInSlotOrder.find(x => x.slotIndex === i);
           if (!p) continue;
           const amount = amountBySlot[i];
-          const range = getSlotWeightRange(i);
+          const range = p.range;
           if (range && (amount < range.min || amount > range.max)) {
             weightOk = false;
             break;
