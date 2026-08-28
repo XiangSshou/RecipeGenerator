@@ -89,6 +89,63 @@
       font-size: .86rem;
       margin-top: 10px;
     }
+    .guide-card {
+      margin: 14px 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .guide-card summary,
+    .inline-help summary {
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+    }
+    .guide-card summary::-webkit-details-marker,
+    .inline-help summary::-webkit-details-marker { display: none; }
+    .guide-card > summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 54px;
+      padding: 12px 14px;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+    .guide-card > summary::after {
+      content: '＋';
+      margin-left: auto;
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+    .guide-card[open] > summary::after { content: '−'; }
+    .guide-icon {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      flex: 0 0 auto;
+      color: #466500;
+      background: var(--accent-soft);
+      border-radius: 9px;
+      font: 800 .9rem/1 'Barlow Condensed', sans-serif;
+    }
+    .guide-summary-copy span { display: block; color: var(--text-muted); font-size: .65rem; font-weight: 600; margin-top: 2px; }
+    .guide-content { padding: 0 14px 15px; border-top: 1px solid var(--border); }
+    .guide-steps { display: grid; gap: 8px; padding-top: 13px; }
+    .guide-step { display: grid; grid-template-columns: 27px 1fr; gap: 9px; align-items: start; padding: 10px; background: var(--surface2); border-radius: 12px; }
+    .guide-step-num { display: grid; place-items: center; width: 27px; height: 27px; color: #17211b; background: var(--accent); border-radius: 8px; font: 800 .76rem/1 'Barlow Condensed', sans-serif; }
+    .guide-step strong { display: block; margin-bottom: 2px; font-size: .75rem; }
+    .guide-step p { color: var(--text-muted); font-size: .68rem; line-height: 1.55; }
+    .guide-shortcut { margin-top: 9px; padding: 10px 11px; color: #3e5b00; background: var(--accent-soft); border-radius: 11px; font-size: .68rem; line-height: 1.55; }
+    .inline-help { margin: -2px 0 12px; border: 1px solid var(--border); border-radius: 11px; overflow: hidden; }
+    .inline-help summary { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 8px 10px; color: #587d00; font-size: .7rem; font-weight: 800; }
+    .inline-help summary::after { content: '＋'; color: var(--text-muted); }
+    .inline-help[open] summary::after { content: '−'; }
+    .inline-help-body { padding: 9px 11px 11px; color: var(--text-muted); background: var(--surface2); border-top: 1px solid var(--border); font-size: .68rem; line-height: 1.65; }
+    .inline-help-body p + p { margin-top: 5px; }
     .section-kicker {
       display: flex;
       align-items: center;
@@ -434,6 +491,7 @@
       .result-macro { grid-template-columns: repeat(4, 1fr); }
       .food-item { grid-template-columns: 1fr auto auto; }
       .food-detail { grid-column: auto; text-align: right; }
+      .guide-steps { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 380px) {
       .inputs { grid-template-columns: 1fr; }
@@ -456,6 +514,34 @@
         <p class="subtitle">按你的目标，精准搭配每一餐。</p>
       </div>
     </header>
+
+    <details class="guide-card">
+      <summary>
+        <span class="guide-icon">?</span>
+        <span class="guide-summary-copy">第一次使用？查看使用方法<span>按自己的节奏浏览，不会打断当前操作</span></span>
+      </summary>
+      <div class="guide-content">
+        <div class="guide-steps">
+          <div class="guide-step">
+            <span class="guide-step-num">1</span>
+            <div><strong>了解每日消耗</strong><p>填写身体数据得到 TDEE。想使用体重倍数或热量赤字、盈余时，需要先完成这一步。</p></div>
+          </div>
+          <div class="guide-step">
+            <span class="guide-step-num">2</span>
+            <div><strong>换算营养目标</strong><p>能量、蛋白质、碳水和脂肪任填三项，系统会自动计算并锁定第四项。</p></div>
+          </div>
+          <div class="guide-step">
+            <span class="guide-step-num">3</span>
+            <div><strong>应用目标</strong><p>设置计划天数并点击“应用到我的目标”，下方会得到本次配餐所需的营养总量。</p></div>
+          </div>
+          <div class="guide-step">
+            <span class="guide-step-num">4</span>
+            <div><strong>选择食物并生成</strong><p>保留随机选择，或指定食物类别、食材和重量范围，然后生成配餐。</p></div>
+          </div>
+        </div>
+        <p class="guide-shortcut"><strong>快速使用：</strong>可以跳过身体数据和换算，直接在“今天的目标”填写蛋白质、碳水和脂肪，保留三个随机槽位后生成。</p>
+      </div>
+    </details>
 
     <div class="section-kicker"><strong><span class="step-badge">01</span>算出每日消耗</strong><span>了解身体基础</span></div>
 
@@ -513,6 +599,14 @@
         <button type="button" class="clear-btn" id="clearEnergyMacros">清空</button>
       </div>
       <p class="slot-label">任意填写三项，自动计算剩余一项。适合把教练给出的热量目标快速换算成宏量营养。</p>
+      <details class="inline-help">
+        <summary>四项应该怎么填写？</summary>
+        <div class="inline-help-body">
+          <p>最简单的方式是填写蛋白质、碳水和脂肪，能量会自动计算。</p>
+          <p>上方已有 TDEE 时，也可以使用赤字／盈余和体重倍数。变灰的项目表示它正由另外三项自动计算。</p>
+          <p>需要多天总量时再修改下方天数；保持 1 天就是单日目标。</p>
+        </div>
+      </details>
       <div class="inputs-4">
         <div class="field">
           <label>能量（kcal）</label>
@@ -604,6 +698,14 @@
       <div class="card-section">
         <h2>选择这顿想吃什么</h2>
         <p class="slot-label">至少选择 3 类食物。可以指定食材与重量范围，也可以交给系统随机搭配。</p>
+        <details class="inline-help">
+          <summary>食物槽位应该怎么选？</summary>
+          <div class="inline-help-body">
+            <p>每个槽位代表一种食物。先选类别，再选择具体食材；保持“随机”会由系统代选。</p>
+            <p>最小和最大重量都可以留空。只有明确想控制某种食物份量时才需要填写。</p>
+            <p>如果没有找到合适搭配，可以减少重量限制、更换食物类别，或者微调营养目标后重试。</p>
+          </div>
+        </details>
         <div id="slotRows"></div>
         <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
           <button type="button" class="btn-secondary" id="addSlot">添加槽位</button>
