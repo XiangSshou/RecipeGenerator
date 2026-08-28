@@ -6,104 +6,180 @@
   <title>营养搭配生成器</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0f1419;
-      --surface: #1a2332;
-      --surface2: #243044;
-      --text: #e6edf3;
-      --text-muted: #8b949e;
-      --accent: #58a6ff;
-      --accent-soft: rgba(88, 166, 255, 0.15);
-      --success: #3fb950;
-      --border: #30363d;
-      --radius: 12px;
-      --shadow: 0 8px 24px rgba(0,0,0,0.35);
+      --bg: #f3f5ed;
+      --surface: #ffffff;
+      --surface2: #f4f6f0;
+      --text: #161b18;
+      --text-muted: #68716b;
+      --accent: #b9f227;
+      --accent-strong: #86bd00;
+      --accent-soft: rgba(185, 242, 39, 0.2);
+      --purple: #7557ff;
+      --orange: #ff8a3d;
+      --danger: #cf3c3c;
+      --border: #dfe4da;
+      --border-strong: #c8cec2;
+      --radius: 22px;
+      --shadow: 0 12px 32px rgba(39, 48, 42, 0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Noto Sans SC', -apple-system, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      line-height: 1.6;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
     }
     .page {
-      max-width: 560px;
+      max-width: 760px;
       margin: 0 auto;
-      padding: 2rem 1rem 4rem;
+      padding: 0 14px calc(96px + env(safe-area-inset-bottom));
     }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      margin: 0 -14px 14px;
+      padding: calc(16px + env(safe-area-inset-top)) 20px 22px;
+      color: #f7faef;
+      background: #17211b;
+      border-radius: 0 0 32px 32px;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 190px;
+      height: 190px;
+      right: -78px;
+      top: -58px;
+      border-radius: 50%;
+      border: 34px solid rgba(185, 242, 39, 0.14);
+      box-shadow: 0 0 0 20px rgba(185, 242, 39, 0.04);
+    }
+    .brand-row { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+    .brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 0.78rem; letter-spacing: .13em; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      color: #17211b;
+      background: var(--accent);
+      border-radius: 9px 9px 9px 3px;
+      font: 800 1rem/1 'Barlow Condensed', sans-serif;
+    }
+    .hero-tag { color: #b7c1b9; font-size: .72rem; font-weight: 600; }
+    .hero-copy { position: relative; z-index: 1; padding-top: 26px; }
     h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      max-width: 430px;
+      font-size: clamp(2rem, 9.5vw, 3.5rem);
+      line-height: 1.08;
+      font-weight: 900;
+      letter-spacing: -.045em;
     }
+    .hero h1 em { color: var(--accent); font-style: normal; }
     .subtitle {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 2rem;
+      max-width: 440px;
+      color: #b9c3bc;
+      font-size: .86rem;
+      margin-top: 10px;
+    }
+    .section-kicker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 22px 4px 10px;
+    }
+    .section-kicker strong { font-size: .82rem; font-weight: 800; }
+    .section-kicker span { color: var(--text-muted); font-size: .72rem; }
+    .step-badge {
+      display: inline-grid;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      margin-right: 8px;
+      color: #17211b;
+      background: var(--accent);
+      border-radius: 8px;
+      font: 800 .8rem/1 'Barlow Condensed', sans-serif;
     }
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.5rem;
-      margin-bottom: 1.25rem;
+      padding: 18px;
+      margin-bottom: 12px;
       box-shadow: var(--shadow);
     }
     .card h2 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-size: 1rem;
+      line-height: 1.3;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
     }
-    .card h2:not(:first-child) { margin-top: 1.5rem; }
-    .card-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .card h2:not(:first-child) { margin-top: 18px; }
+    .card-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .card-title-row h2 { margin-bottom: 0; }
+    .clear-btn {
+      padding: 5px 8px;
+      color: var(--text-muted);
+      background: transparent;
+      border: 0;
+      border-radius: 8px;
+      font: 700 .7rem/1 'Noto Sans SC', sans-serif;
+      cursor: pointer;
+    }
+    .clear-btn:hover { color: var(--danger); background: #fff1f0; }
+    .card-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
     .inputs {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
+      gap: 8px;
     }
     .inputs-4 {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.75rem;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
     }
     .field {
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
+      gap: 6px;
     }
     .field label {
-      font-size: 0.8rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
-      font-weight: 500;
+      font-weight: 700;
     }
-    .field input {
+    .field input, .tdee-grid select {
       width: 100%;
-      padding: 0.65rem 0.75rem;
+      min-height: 48px;
+      padding: 11px 12px;
       background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      border: 1px solid transparent;
+      border-radius: 13px;
       color: var(--text);
-      font-size: 1rem;
+      font-size: 16px;
+      font-family: inherit;
+      font-weight: 600;
       font-variant-numeric: tabular-nums;
     }
-    .field input:focus {
+    .field input:focus, .tdee-grid select:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
+      border-color: var(--accent-strong);
+      background: #fff;
+      box-shadow: 0 0 0 4px var(--accent-soft);
     }
     .field input:disabled {
-      background: var(--bg);
-      color: var(--text-muted);
+      background: #edf0e9;
+      color: #7f8a82;
       cursor: not-allowed;
     }
     .field input::placeholder { color: var(--text-muted); opacity: 0.7; }
@@ -113,170 +189,279 @@
       margin: 0;
     }
     .field input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+    .weight-multiplier {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 5px 8px;
+      color: var(--text-muted);
+      background: #f8faF5;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: .66rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .weight-multiplier .weight-base { color: var(--text); }
+    .weight-multiplier input {
+      width: 46px;
+      min-height: 26px;
+      padding: 3px 5px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      font-size: 14px;
+      text-align: center;
+    }
+    .weight-multiplier input:focus { outline: none; border-color: var(--accent-strong); }
+    .weight-multiplier.is-disabled { opacity: .58; }
+    .energy-adjustment {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 72px;
+      gap: 6px;
+      min-height: 34px;
+      padding: 5px 6px;
+      background: #f8faf5;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .energy-adjustment select,
+    .energy-adjustment input {
+      width: 100%;
+      min-width: 0;
+      min-height: 26px;
+      padding: 3px 6px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      font: 700 12px/1 'Noto Sans SC', sans-serif;
+    }
+    .energy-adjustment select:focus,
+    .energy-adjustment input:focus { outline: none; border-color: var(--accent-strong); }
+    .energy-adjustment select:disabled,
+    .energy-adjustment input:disabled { color: #8a938d; background: #edf0e9; cursor: not-allowed; }
+    .energy-adjustment.is-disabled { opacity: .58; }
+    .kcal-input { position: relative; }
+    .kcal-input input { padding-right: 29px; text-align: right; }
+    .kcal-input span { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: .55rem; font-weight: 700; pointer-events: none; }
     .calories-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: #17211b;
+      border-radius: 16px;
     }
-    .calories-label { font-size: 0.9rem; color: var(--text-muted); }
+    .calories-label { font-size: 0.76rem; color: #aab5ad; font-weight: 600; }
     .calories-value {
-      font-size: 1.35rem;
-      font-weight: 700;
+      font: 700 1.45rem/1 'Barlow Condensed', 'Noto Sans SC', sans-serif;
       color: var(--accent);
     }
     .btn {
       width: 100%;
-      padding: 0.9rem 1.25rem;
+      min-height: 56px;
+      padding: 14px 18px;
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 800;
       font-family: inherit;
-      color: #fff;
-      background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+      color: #17211b;
+      background: var(--accent);
       border: none;
-      border-radius: var(--radius);
+      border-radius: 16px;
       cursor: pointer;
-      transition: transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 8px 0 #7ead09;
+      transition: transform .12s ease, box-shadow .12s ease, background .2s;
     }
     .btn:hover {
-      background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%);
-      box-shadow: 0 4px 14px rgba(46, 160, 67, 0.4);
+      background: #c7ff37;
     }
-    .btn:active { transform: scale(0.98); }
+    .btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #7ead09; }
+    .btn .btn-arrow { float: right; font-size: 1.25rem; line-height: 1; }
     .result-card { margin-top: 1.25rem; }
     .result-card h2 { margin-bottom: 0.75rem; }
     .result-macro {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
     }
     .macro-pill {
-      padding: 0.4rem 0.75rem;
+      padding: 11px 12px;
       background: var(--surface2);
-      border-radius: 999px;
-      font-size: 0.85rem;
+      border-radius: 13px;
+      font-size: 0.72rem;
       color: var(--text-muted);
     }
-    .macro-pill span { color: var(--text); font-weight: 600; }
+    .macro-pill span { color: var(--text); font: 700 1.05rem/1 'Barlow Condensed', sans-serif; }
     .food-list {
       list-style: none;
     }
     .food-item {
       display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 0.75rem;
+      grid-template-columns: 1fr auto;
+      gap: 4px 12px;
       align-items: center;
-      padding: 0.75rem 0;
+      padding: 13px 0;
       border-bottom: 1px solid var(--border);
-      font-size: 0.95rem;
+      font-size: .9rem;
     }
     .food-item:last-child { border-bottom: none; }
-    .food-name { font-weight: 500; }
-    .food-gram { color: var(--accent); font-variant-numeric: tabular-nums; }
-    .food-detail { font-size: 0.8rem; color: var(--text-muted); }
+    .food-name { font-weight: 800; }
+    .food-gram { color: var(--accent-strong); font-weight: 800; font-variant-numeric: tabular-nums; }
+    .food-detail { grid-column: 1 / -1; font-size: 0.7rem; color: var(--text-muted); }
     .error-msg {
-      padding: 1rem;
-      background: rgba(248, 81, 73, 0.12);
-      border: 1px solid rgba(248, 81, 73, 0.4);
+      padding: 14px;
+      background: #fff1f0;
+      border: 1px solid #efb8b4;
       border-radius: var(--radius);
-      color: #f85149;
-      font-size: 0.9rem;
-      margin-top: 1rem;
+      color: var(--danger);
+      font-size: .82rem;
+      margin-top: 12px;
     }
     .hidden { display: none !important; }
     .btn-secondary {
       background: var(--surface2);
       color: var(--text);
-      border: 1px solid var(--border);
-      padding: 0.5rem 0.75rem;
-      font-size: 0.85rem;
-      border-radius: 8px;
+      border: 1px solid transparent;
+      min-height: 42px;
+      padding: 9px 13px;
+      font-size: .78rem;
+      font-weight: 700;
+      border-radius: 12px;
       cursor: pointer;
       font-family: inherit;
     }
-    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-secondary:hover { border-color: var(--accent-strong); color: #587d00; }
+    .apply-row { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; }
+    .days-input { position: relative; }
+    .days-input input {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 32px 9px 11px;
+      color: var(--text);
+      background: var(--surface2);
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font: 700 16px/1 'Noto Sans SC', sans-serif;
+    }
+    .days-input input:focus { outline: none; border-color: var(--accent-strong); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .days-input span { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: .72rem; font-weight: 700; pointer-events: none; }
     .slot-row {
       display: grid;
-      grid-template-columns: auto 1fr 1fr 4rem 4rem;
-      gap: 0.5rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
       align-items: center;
-      margin-bottom: 0.5rem;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: var(--surface2);
+      border-radius: 15px;
     }
-    .slot-row.has-remove {
-      grid-template-columns: auto 1fr 1fr 4rem 4rem auto;
-    }
-    .slot-row .slot-num { font-size: 0.85rem; color: var(--text-muted); min-width: 3rem; }
+    .slot-row.has-remove { grid-template-columns: 1fr 1fr; }
+    .slot-row .slot-num { grid-column: 1 / -1; font-size: .7rem; color: var(--text); font-weight: 800; }
     .slot-row .slot-minmax { font-size: 0.75rem; color: var(--text-muted); }
     .slot-row .slot-minmax input {
-      padding: 0.35rem 0.4rem;
-      font-size: 0.8rem;
+      min-height: 42px;
+      padding: 9px 10px;
+      font-size: 16px;
       width: 100%;
-      background: var(--surface2);
+      background: #fff;
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 11px;
       color: var(--text);
     }
     .slot-row .slot-minmax input::-webkit-inner-spin-button,
     .slot-row .slot-minmax input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     .slot-row .slot-minmax input { -moz-appearance: textfield; appearance: textfield; }
     .slot-row select {
-      padding: 0.5rem 0.6rem;
-      background: var(--surface2);
+      width: 100%;
+      min-width: 0;
+      min-height: 42px;
+      padding: 9px 10px;
+      background: #fff;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 11px;
       color: var(--text);
-      font-size: 0.9rem;
+      font-size: .82rem;
       font-family: inherit;
       cursor: pointer;
     }
-    .slot-row select:focus { outline: none; border-color: var(--accent); }
-    .slot-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .slot-row select:focus { outline: none; border-color: var(--accent-strong); }
+    .slot-row.has-remove .btn-secondary { grid-column: 1 / -1; min-height: 38px; color: var(--danger); }
+    .slot-label { font-size: .72rem; line-height: 1.65; color: var(--text-muted); margin-bottom: 12px; }
     .upload-zone {
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      padding: 0.75rem;
+      border: 1.5px dashed var(--border-strong);
+      border-radius: 14px;
+      padding: 14px;
       text-align: center;
-      font-size: 0.85rem;
+      font-size: .78rem;
       color: var(--text-muted);
-      margin-bottom: 0.75rem;
+      margin-bottom: 10px;
+      background: var(--surface2);
     }
     .upload-zone input[type=file] { display: none; }
-    .upload-zone label { cursor: pointer; color: var(--accent); }
+    .upload-zone label { cursor: pointer; color: #5d8500; font-weight: 800; }
     .tag-list { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
     .tag-list span { display: inline-block; background: var(--surface2); padding: 0.2rem 0.5rem; border-radius: 4px; margin-right: 0.25rem; margin-bottom: 0.25rem; }
-    .tdee-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .tdee-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
     .tdee-grid .field.wide { grid-column: span 2; }
-    .tdee-grid select {
-      padding: 0.65rem 0.75rem;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 1rem;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    .tdee-grid select:focus { outline: none; border-color: var(--accent); }
-    .tdee-result { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-    .tdee-result .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .tdee-result { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .tdee-result .row { display: block; padding: 13px; margin: 0; background: #17211b; border-radius: 14px; }
     .tdee-result .row:last-child { margin-bottom: 0; }
+    .tdee-result .calories-label { display: block; margin-bottom: 7px; }
+    .tdee-result .calories-value { display: block; font-size: 1.1rem; }
+    .helper-link { color: #5d8500; font-size: .7rem; font-weight: 700; text-decoration: none; }
+    .result-card { border-color: #c5e96d; background: linear-gradient(180deg, #fbfff2, #fff 42%); }
+    .result-label { display: inline-block; padding: 5px 8px; margin-bottom: 9px; color: #466500; background: var(--accent-soft); border-radius: 7px; font-size: .62rem; font-weight: 800; letter-spacing: .08em; }
     footer {
       text-align: center;
-      margin-top: 2rem;
-      font-size: 0.8rem;
+      margin-top: 22px;
+      font-size: .68rem;
       color: var(--text-muted);
+    }
+    @media (min-width: 640px) {
+      .page { padding-left: 22px; padding-right: 22px; }
+      .hero { margin-left: -22px; margin-right: -22px; padding-left: 30px; padding-right: 30px; }
+      .card { padding: 24px; }
+      .inputs-4 { grid-template-columns: repeat(4, 1fr); }
+      .slot-row { grid-template-columns: 70px 1.2fr 1.2fr .72fr .72fr; }
+      .slot-row.has-remove { grid-template-columns: 70px 1.2fr 1.2fr .72fr .72fr auto; }
+      .slot-row .slot-num { grid-column: auto; }
+      .slot-row.has-remove .btn-secondary { grid-row: auto; grid-column: auto; }
+      .result-macro { grid-template-columns: repeat(4, 1fr); }
+      .food-item { grid-template-columns: 1fr auto auto; }
+      .food-detail { grid-column: auto; text-align: right; }
+    }
+    @media (max-width: 380px) {
+      .inputs { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
   <div class="page">
 
+    <header class="hero">
+      <div class="brand-row">
+        <div class="brand"><span class="brand-mark">F</span> FITPLATE</div>
+        <span class="hero-tag">精准配餐</span>
+      </div>
+      <div class="hero-copy">
+        <h1>吃对，<em>练得更好。</em></h1>
+        <p class="subtitle">按你的目标，精准搭配每一餐。</p>
+      </div>
+    </header>
+
+    <div class="section-kicker"><strong><span class="step-badge">01</span>算出每日消耗</strong><span>了解身体基础</span></div>
+
     <div class="card" id="tdeeCard">
-      <h2>每日热量消耗</h2>
-      <p class="slot-label">根据性别、年龄、体重、身高与活动量估算基础代谢（BMR）与每日总消耗（TDEE），仅供参考。</p>
+      <h2>你的身体数据</h2>
+      <p class="slot-label">使用 Mifflin-St Jeor 公式估算基础代谢与每日总消耗，结果仅作饮食规划参考。</p>
       <div class="tdee-grid">
         <div class="field">
           <label>性别</label>
@@ -320,34 +505,71 @@
       </div>
     </div>
 
+    <div class="section-kicker"><strong><span class="step-badge">02</span>设定营养目标</strong><span>让每一克都有用</span></div>
+
     <div class="card">
-      <h2>能量与三大营养素换算</h2>
-      <p class="slot-label">在四个输入中任意填入三个，自动计算剩余一个；清空任意一项后四个都可再次编辑。</p>
+      <div class="card-title-row">
+        <h2>热量 / 宏量换算</h2>
+        <button type="button" class="clear-btn" id="clearEnergyMacros">清空</button>
+      </div>
+      <p class="slot-label">任意填写三项，自动计算剩余一项。适合把教练给出的热量目标快速换算成宏量营养。</p>
       <div class="inputs-4">
         <div class="field">
           <label>能量（kcal）</label>
+          <div class="energy-adjustment hidden" id="emEnergyAdjustment">
+            <select id="emBalanceMode" aria-label="能量赤字或盈余">
+              <option value="deficit">赤字</option>
+              <option value="surplus">盈余</option>
+            </select>
+            <div class="kcal-input">
+              <input type="number" id="emBalanceCalories" min="0" step="10" inputmode="numeric" placeholder="300" aria-label="赤字或盈余卡路里">
+              <span>kcal</span>
+            </div>
+          </div>
           <input type="number" id="emEnergy" min="0" step="1" placeholder="例如 2000">
         </div>
         <div class="field">
           <label>蛋白质（g）</label>
+          <div class="weight-multiplier hidden" data-macro-index="1">
+            <span class="weight-base">体重</span><span>×</span>
+            <input type="number" id="emProteinMultiplier" min="0" step="0.1" inputmode="decimal" placeholder="2.0" aria-label="蛋白质体重倍数">
+            <span>倍</span>
+          </div>
           <input type="number" id="emProtein" min="0" step="0.1" placeholder="例如 100">
         </div>
         <div class="field">
           <label>碳水（g）</label>
+          <div class="weight-multiplier hidden" data-macro-index="2">
+            <span class="weight-base">体重</span><span>×</span>
+            <input type="number" id="emCarbsMultiplier" min="0" step="0.1" inputmode="decimal" placeholder="3.0" aria-label="碳水体重倍数">
+            <span>倍</span>
+          </div>
           <input type="number" id="emCarbs" min="0" step="0.1" placeholder="例如 200">
         </div>
         <div class="field">
           <label>脂肪（g）</label>
+          <div class="weight-multiplier hidden" data-macro-index="3">
+            <span class="weight-base">体重</span><span>×</span>
+            <input type="number" id="emFatMultiplier" min="0" step="0.1" inputmode="decimal" placeholder="0.8" aria-label="脂肪体重倍数">
+            <span>倍</span>
+          </div>
           <input type="number" id="emFat" min="0" step="0.1" placeholder="例如 60">
         </div>
       </div>
       <div class="card-section">
-        <button type="button" class="btn-secondary" id="applyToTargetMacros">将当前三大营养素填入下方目标</button>
+        <div class="apply-row">
+          <div class="days-input">
+            <input type="number" id="applyDays" min="0.1" step="0.1" value="1" inputmode="decimal" aria-label="目标天数">
+            <span>天</span>
+          </div>
+          <button type="button" class="btn-secondary" id="applyToTargetMacros">应用到我的目标 ↓</button>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <h2>目标营养素（克）</h2>
+      <h2>今天的目标</h2>
+      <p class="slot-label">填写本次配餐所需的蛋白质、碳水和脂肪目标。</p>
       <div class="inputs">
         <div class="field">
           <label>蛋白质</label>
@@ -368,20 +590,20 @@
       </div>
 
       <div class="card-section">
-        <h2>食物来源</h2>
-        <p class="slot-label">上传食物列表（.txt），上传后将仅使用该列表，不再使用内置默认列表。</p>
+        <h2>自定义食物库 <span style="color: var(--text-muted); font-size: .68rem; font-weight: 600;">可选</span></h2>
+        <p class="slot-label">上传你常吃的食物列表后，搭配只会从这份清单中选择。</p>
         <div class="upload-zone" id="uploadZone">
           <input type="file" id="fileInput" accept=".txt,text/plain">
           <label for="fileInput">点击选择文件</label>
           <span id="fileHint"> 或拖拽到此处。</span>
         </div>
-        <p class="slot-label">格式说明：每行一种食物，用英文竖线分隔，例如「名称 | 蛋白质 | 碳水 | 脂肪 | 标签1,标签2」。以 # 开头的行为注释。</p>
-        <button type="button" class="btn-secondary" id="downloadExample" style="margin-top: 0.5rem;">下载示例文件</button>
+        <p class="slot-label">每行一种食物：名称 | 蛋白质 | 碳水 | 脂肪 | 标签。以 # 开头的行为注释。</p>
+        <button type="button" class="btn-secondary" id="downloadExample">下载格式示例</button>
       </div>
 
       <div class="card-section">
-        <h2>食物搭配槽位</h2>
-        <p class="slot-label">至少 3 个槽位，可点击「添加槽位」增加。每个槽位：选择来源与具体食物。最小/最大重量(g)：都填则在区间内随机；只填一边则在该边基础上 200g 范围内随机。选择 fix 时优先使用有重量限制的槽位；剩余 3 个槽位用于求解，若其有重量要求则解会校验是否满足。</p>
+        <h2>选择这顿想吃什么</h2>
+        <p class="slot-label">至少选择 3 类食物。可以指定食材与重量范围，也可以交给系统随机搭配。</p>
         <div id="slotRows"></div>
         <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
           <button type="button" class="btn-secondary" id="addSlot">添加槽位</button>
@@ -389,12 +611,13 @@
       </div>
 
       <div class="card-section">
-        <button type="button" class="btn" id="generate">生成搭配</button>
+        <button type="button" class="btn" id="generate">生成我的精准配餐 <span class="btn-arrow">→</span></button>
       </div>
     </div>
 
     <div class="card result-card hidden" id="resultCard">
-      <h2>推荐搭配</h2>
+      <span class="result-label">YOUR FIT PLATE</span>
+      <h2>这份搭配刚刚好</h2>
       <div class="result-macro" id="resultMacro"></div>
       <ul class="food-list" id="foodList"></ul>
     </div>
@@ -605,6 +828,19 @@
     const emCarbsEl = document.getElementById('emCarbs');
     const emFatEl = document.getElementById('emFat');
     const applyToTargetMacrosBtn = document.getElementById('applyToTargetMacros');
+    const applyDaysEl = document.getElementById('applyDays');
+    const clearEnergyMacrosBtn = document.getElementById('clearEnergyMacros');
+    const emBalanceModeEl = document.getElementById('emBalanceMode');
+    const emBalanceCaloriesEl = document.getElementById('emBalanceCalories');
+    const emEnergyAdjustmentEl = document.getElementById('emEnergyAdjustment');
+    const weightMultiplierRows = Array.from(document.querySelectorAll('.weight-multiplier'));
+    const weightMultiplierInputs = [
+      null,
+      document.getElementById('emProteinMultiplier'),
+      document.getElementById('emCarbsMultiplier'),
+      document.getElementById('emFatMultiplier'),
+    ];
+    let currentTdee = 0;
 
     function updateTdee() {
       const gender = document.getElementById('tdeeGender').value;
@@ -615,16 +851,24 @@
       const bmrEl = document.getElementById('tdeeBmr');
       const tdeeEl = document.getElementById('tdeeTdee');
       if (!age || !weight || !height || weight <= 0 || height <= 0) {
+        currentTdee = 0;
         bmrEl.textContent = '— kcal/天';
         tdeeEl.textContent = '— kcal/天';
+        syncWeightMultiplierControls(weight);
+        updateEnergyAdjustment();
+        syncDerivedInputsFromValues();
         return;
       }
       const bmr = gender === 'M'
         ? 10 * weight + 6.25 * height - 5 * age + 5
         : 10 * weight + 6.25 * height - 5 * age - 161;
       const tdee = Math.round(bmr * activity);
+      currentTdee = tdee;
       bmrEl.textContent = Math.round(bmr) + ' kcal/天';
       tdeeEl.textContent = tdee + ' kcal/天';
+      syncWeightMultiplierControls(weight);
+      updateEnergyAdjustment();
+      syncDerivedInputsFromValues();
     }
     ['tdeeGender', 'tdeeAge', 'tdeeWeight', 'tdeeHeight', 'tdeeActivity'].forEach(id => {
       const el = document.getElementById(id);
@@ -840,6 +1084,88 @@
     let emAutoLockedIndex = null; // 0: 能量, 1: 蛋白质, 2: 碳水, 3: 脂肪
     const emFields = [emEnergyEl, emProteinEl, emCarbsEl, emFatEl];
 
+    function releaseAutoLockedField(index) {
+      if (emAutoLockedIndex !== index) return;
+      emAutoLockedIndex = null;
+      emFields.forEach(el => { el.disabled = false; });
+      syncDerivedControlDisabledState();
+    }
+
+    function syncDerivedControlDisabledState() {
+      const hasConsumption = currentTdee > 0;
+      const energyDerived = emAutoLockedIndex === 0;
+      emBalanceModeEl.disabled = !hasConsumption || energyDerived;
+      emBalanceCaloriesEl.disabled = !hasConsumption || energyDerived;
+      emEnergyAdjustmentEl.classList.toggle('is-disabled', !hasConsumption || energyDerived);
+      for (let index = 1; index <= 3; index++) {
+        const isDerived = emAutoLockedIndex === index;
+        weightMultiplierInputs[index].disabled = !hasConsumption || isDerived;
+        const row = weightMultiplierInputs[index].closest('.weight-multiplier');
+        if (row) row.classList.toggle('is-disabled', !hasConsumption || isDerived);
+      }
+    }
+
+    function syncWeightMultiplierControls(weightValue) {
+      const weight = parseFloat(weightValue) || 0;
+      const hasConsumption = currentTdee > 0;
+      weightMultiplierRows.forEach(row => {
+        row.classList.toggle('hidden', !hasConsumption);
+        const base = row.querySelector('.weight-base');
+        if (base && weight > 0) base.textContent = weight.toFixed(1).replace(/\.0$/, '') + ' kg';
+      });
+      emEnergyAdjustmentEl.classList.toggle('hidden', !hasConsumption);
+      emBalanceCaloriesEl.placeholder = hasConsumption ? '300' : '需资料';
+      syncDerivedControlDisabledState();
+      if (!hasConsumption || weight <= 0) return;
+
+      let changed = false;
+      for (let index = 1; index <= 3; index++) {
+        const multiplier = parseFloat(weightMultiplierInputs[index].value);
+        if (!isFinite(multiplier) || multiplier < 0) continue;
+        if (emAutoLockedIndex === index) continue;
+        releaseAutoLockedField(index);
+        emFields[index].value = (weight * multiplier).toFixed(1);
+        changed = true;
+      }
+      if (changed) updateEnergyMacroTool();
+    }
+
+    function formatMultiplier(value) {
+      return value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+    }
+
+    function syncDerivedInputsFromValues(skipMultiplierIndex = null) {
+      const weight = parseFloat(document.getElementById('tdeeWeight').value) || 0;
+      if (weight > 0) {
+        for (let index = 1; index <= 3; index++) {
+          if (index === skipMultiplierIndex) continue;
+          const grams = parseFloat(emFields[index].value);
+          weightMultiplierInputs[index].value = isFinite(grams) && grams >= 0
+            ? formatMultiplier(grams / weight)
+            : '';
+        }
+      }
+
+      const energy = parseFloat(emEnergyEl.value);
+      if (currentTdee > 0 && isFinite(energy) && energy >= 0) {
+        const difference = energy - currentTdee;
+        emBalanceModeEl.value = difference >= 0 ? 'surplus' : 'deficit';
+        emBalanceCaloriesEl.value = Math.round(Math.abs(difference));
+      }
+    }
+
+    function updateEnergyAdjustment() {
+      const adjustment = parseFloat(emBalanceCaloriesEl.value);
+      if (emAutoLockedIndex === 0 || currentTdee <= 0 || !isFinite(adjustment) || adjustment < 0) return;
+
+      const isDeficit = emBalanceModeEl.value === 'deficit';
+      const targetEnergy = Math.max(0, currentTdee + (isDeficit ? -adjustment : adjustment));
+      releaseAutoLockedField(0);
+      emEnergyEl.value = Math.round(targetEnergy);
+      updateEnergyMacroTool();
+      syncDerivedInputsFromValues();
+    }
+
     function updateEnergyMacroTool() {
       if (!emFields.every(el => el)) return;
       const values = emFields.map(el => el.value.trim());
@@ -854,6 +1180,7 @@
         emAutoLockedIndex = null;
         emFields.forEach(el => el.disabled = false);
         emFields[wasLocked].value = '';
+        syncDerivedControlDisabledState();
         return;
       }
 
@@ -861,6 +1188,7 @@
       if (emptyIdx.length >= 2) {
         emAutoLockedIndex = null;
         emFields.forEach(el => el.disabled = false);
+        syncDerivedControlDisabledState();
         return;
       }
 
@@ -870,6 +1198,7 @@
       if (emptyIdx.length === 0) {
         if (emAutoLockedIndex === null) {
           emFields.forEach(el => el.disabled = false);
+          syncDerivedControlDisabledState();
           return;
         }
         // 重新根据其他三个更新被锁定字段
@@ -890,6 +1219,7 @@
         if (result < 0) result = 0;
         emFields[i].value = result.toFixed(i === 0 ? 0 : 1);
         emFields.forEach((el, idx) => { el.disabled = idx === i; });
+        syncDerivedControlDisabledState();
         return;
       }
 
@@ -898,6 +1228,7 @@
       if (nums.some((n, idx) => idx !== missing && (isNaN(n) || !isFinite(n)))) {
         emAutoLockedIndex = null;
         emFields.forEach(el => el.disabled = false);
+        syncDerivedControlDisabledState();
         return;
       }
 
@@ -917,19 +1248,56 @@
       emFields[missing].value = result.toFixed(missing === 0 ? 0 : 1);
       emAutoLockedIndex = missing;
       emFields.forEach((el, idx) => { el.disabled = idx === missing; });
+      syncDerivedControlDisabledState();
     }
 
-    emFields.forEach(el => {
+    emFields.forEach((el, index) => {
       if (!el) return;
-      el.addEventListener('input', updateEnergyMacroTool);
+      el.addEventListener('input', () => {
+        updateEnergyMacroTool();
+        syncDerivedInputsFromValues();
+      });
+    });
+
+    weightMultiplierInputs.slice(1).forEach((input, offset) => {
+      input.addEventListener('input', () => {
+        const multiplierIndex = offset + 1;
+        const weight = parseFloat(document.getElementById('tdeeWeight').value) || 0;
+        syncWeightMultiplierControls(weight);
+        syncDerivedInputsFromValues(multiplierIndex);
+      });
+    });
+    emBalanceModeEl.addEventListener('change', updateEnergyAdjustment);
+    emBalanceCaloriesEl.addEventListener('input', updateEnergyAdjustment);
+
+    clearEnergyMacrosBtn.addEventListener('click', () => {
+      emAutoLockedIndex = null;
+      emFields.forEach(field => {
+        field.value = '';
+        field.disabled = false;
+      });
+      weightMultiplierInputs.slice(1).forEach(input => { input.value = ''; });
+      emBalanceModeEl.value = 'deficit';
+      emBalanceCaloriesEl.value = '';
+      applyDaysEl.value = '1';
+      syncDerivedControlDisabledState();
     });
 
     if (applyToTargetMacrosBtn) {
       applyToTargetMacrosBtn.addEventListener('click', () => {
-        // 只同步三大营养素到下方目标营养素输入框
-        if (emProteinEl) proteinEl.value = emProteinEl.value;
-        if (emCarbsEl) carbsEl.value = emCarbsEl.value;
-        if (emFatEl) fatEl.value = emFatEl.value;
+        let days = parseFloat(applyDaysEl.value);
+        if (!isFinite(days) || days <= 0) {
+          days = 1;
+          applyDaysEl.value = '1';
+        }
+        const valueForDays = (element) => {
+          const value = parseFloat(element.value);
+          if (!isFinite(value)) return '';
+          return String(Math.round(value * days * 10) / 10);
+        };
+        if (emProteinEl) proteinEl.value = valueForDays(emProteinEl);
+        if (emCarbsEl) carbsEl.value = valueForDays(emCarbsEl);
+        if (emFatEl) fatEl.value = valueForDays(emFatEl);
         updateCalories();
       });
     }
