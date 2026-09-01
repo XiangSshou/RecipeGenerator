@@ -449,18 +449,108 @@
     .slot-row select:focus { outline: none; border-color: var(--accent-strong); }
     .slot-row.has-remove .btn-secondary { grid-column: 1 / -1; min-height: 38px; color: var(--danger); }
     .slot-label { font-size: .72rem; line-height: 1.65; color: var(--text-muted); margin-bottom: 12px; }
-    .upload-zone {
-      border: 1.5px dashed var(--border-strong);
-      border-radius: 14px;
-      padding: 14px;
-      text-align: center;
-      font-size: .78rem;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-      background: var(--surface2);
+    .food-text-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
     }
-    .upload-zone input[type=file] { display: none; }
-    .upload-zone label { cursor: pointer; color: #5d8500; font-weight: 800; }
+    .food-text-toolbar strong { font-size: .74rem; }
+    .food-text-toolbar .btn-secondary { flex: 0 0 auto; }
+    .food-text-actions { display: flex; gap: 6px; }
+    .food-textarea {
+      display: block;
+      width: 100%;
+      min-height: 210px;
+      resize: vertical;
+      padding: 13px 14px;
+      color: var(--text);
+      background: #f8faf5;
+      border: 1px solid var(--border-strong);
+      border-radius: 14px;
+      font: 500 16px/1.75 ui-monospace, SFMono-Regular, Consolas, 'Noto Sans SC', monospace;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      overflow-x: hidden;
+      overflow-y: auto;
+      tab-size: 2;
+    }
+    .food-textarea:focus {
+      outline: none;
+      border-color: var(--accent-strong);
+      background: #fff;
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+    .food-textarea::placeholder { color: #879088; opacity: 1; }
+    .food-textarea.is-compact { min-height: 150px; }
+    .food-text-status {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      min-height: 22px;
+      margin-top: 8px;
+      color: var(--text-muted);
+      font-size: .68rem;
+      line-height: 1.55;
+    }
+    .food-text-status::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      flex: 0 0 auto;
+      margin-top: 5px;
+      background: #9aa39c;
+      border-radius: 50%;
+    }
+    .food-text-status.is-success { color: #4e7000; }
+    .food-text-status.is-success::before { background: var(--accent-strong); }
+    .food-text-status.is-warning { color: #9b5a13; }
+    .food-text-status.is-warning::before { background: var(--orange); }
+    .food-format {
+      margin-top: 10px;
+      padding: 10px 11px;
+      color: var(--text-muted);
+      background: var(--surface2);
+      border-radius: 11px;
+      font-size: .68rem;
+      line-height: 1.65;
+    }
+    .food-format code { color: var(--text); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .food-library { padding-top: 0; }
+    .food-library > summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+    }
+    .food-library > summary::-webkit-details-marker { display: none; }
+    .food-library-title {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      min-width: 0;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+    .food-library-title small { color: var(--text-muted); font-size: .68rem; font-weight: 600; }
+    .food-library-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+      color: #587d00;
+      font-size: .7rem;
+      font-weight: 800;
+    }
+    .food-library-toggle::after { content: '＋'; font-size: .9rem; }
+    .food-library[open] .food-library-toggle::before { content: '收起'; }
+    .food-library:not([open]) .food-library-toggle::before { content: '展开'; }
+    .food-library[open] .food-library-toggle::after { content: '−'; }
+    .food-library-body { padding-bottom: 2px; }
     .tag-list { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
     .tag-list span { display: inline-block; background: var(--surface2); padding: 0.2rem 0.5rem; border-radius: 4px; margin-right: 0.25rem; margin-bottom: 0.25rem; }
     .tdee-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
@@ -683,17 +773,42 @@
         <span class="calories-value" id="totalCal">— kcal</span>
       </div>
 
-      <div class="card-section">
-        <h2>自定义食物库 <span style="color: var(--text-muted); font-size: .68rem; font-weight: 600;">可选</span></h2>
-        <p class="slot-label">上传你常吃的食物列表后，搭配只会从这份清单中选择。</p>
-        <div class="upload-zone" id="uploadZone">
-          <input type="file" id="fileInput" accept=".txt,text/plain">
-          <label for="fileInput">点击选择文件</label>
-          <span id="fileHint"> 或拖拽到此处。</span>
+      <details class="card-section food-library">
+        <summary>
+          <span class="food-library-title">自定义食物库 <small>可选</small></span>
+          <span class="food-library-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="food-library-body">
+          <p class="slot-label">把食物清单直接粘贴到文本框，搭配会自动改用这份清单。留空则使用内置食物库。</p>
+          <div class="food-text-toolbar">
+            <strong>食物清单文本</strong>
+            <button type="button" class="btn-secondary" id="copyFoodExample">复制示例</button>
+          </div>
+          <textarea class="food-textarea" id="foodTextInput" aria-label="自定义食物清单" spellcheck="false" autocapitalize="off" placeholder="鸡胸肉 蛋白质：24.6 碳水：0 脂肪：1.9 标签：肉类，高蛋白&#10;大米 蛋白质：7.4 碳水：77 脂肪：0.8 标签：主食&#10;西兰花 蛋白质：4.1 碳水：4.3 脂肪：0.6 标签：蔬菜"></textarea>
+          <p class="food-text-status" id="foodTextStatus" role="status" aria-live="polite">当前使用内置食物库</p>
+          <p class="food-format"><strong>每行格式：</strong><code>食物名 蛋白质：x 碳水：x 脂肪：x 标签：A，B</code><br>营养数据按每 100g 填写；多个标签用逗号分隔，标签可不填，以 # 开头的行会被忽略。</p>
         </div>
-        <p class="slot-label">每行一种食物：名称 | 蛋白质 | 碳水 | 脂肪 | 标签。以 # 开头的行为注释。</p>
-        <button type="button" class="btn-secondary" id="downloadExample">下载格式示例</button>
-      </div>
+      </details>
+
+      <details class="card-section food-library">
+        <summary>
+          <span class="food-library-title">配餐文本配置 <small>可选</small></span>
+          <span class="food-library-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="food-library-body">
+          <p class="slot-label">同一个文本框可以同时填写固定食物和槽位搭配。粘贴“当前配置”文本后，会自动恢复固定食物和下方槽位。</p>
+          <div class="food-text-toolbar">
+            <strong>固定食物 + 槽位</strong>
+            <span class="food-text-actions">
+              <button type="button" class="btn-secondary" id="copyMealConfigExample">复制示例</button>
+              <button type="button" class="btn-secondary" id="copyMealConfig">复制当前配置</button>
+            </span>
+          </div>
+          <textarea class="food-textarea" id="mealConfigTextInput" aria-label="固定食物与槽位搭配" spellcheck="false" autocapitalize="off" placeholder="乳清蛋白 蛋白质：24 碳水：3 脂肪：2 份数：1&#10;槽位1 类别：主食 食物：大米 最小重量：100g 最大重量：150g&#10;槽位2 类别：随机 食物：随机 最小重量：不限 最大重量：不限"></textarea>
+          <p class="food-text-status" id="mealConfigTextStatus" role="status" aria-live="polite">当前未使用文本配置</p>
+          <p class="food-format"><strong>固定食物：</strong><code>食物名 蛋白质：x 碳水：x 脂肪：x 份数：x</code><br><strong>槽位搭配：</strong><code>槽位1 类别：主食 食物：大米 最小重量：100g 最大重量：150g</code><br>份数省略时默认为 1；重量可填写“某个数字g”或“不限”。</p>
+        </div>
+      </details>
 
       <div class="card-section">
         <h2>选择这顿想吃什么</h2>
@@ -894,14 +1009,20 @@
     ];
 
     let uploadedFoods = [];
+    let fixedFoods = [];
+    let hasCustomFoodText = false;
 
     function normalizeFood(f) {
       const tags = Array.isArray(f.tags) ? f.tags : (typeof f.tags === 'string' && f.tags ? f.tags.split(/[,，]/).map(s => s.trim()).filter(Boolean) : []);
       return { name: String(f.name || '').trim(), p: +f.p || 0, c: +f.c || 0, f: +f.f || 0, tags };
     }
 
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    }
+
     function getFoodPool() {
-      if (uploadedFoods.length > 0) return uploadedFoods.map(normalizeFood).filter(f => f.name);
+      if (hasCustomFoodText) return uploadedFoods.map(normalizeFood).filter(f => f.name);
       return DEFAULT_FOODS.map(normalizeFood).filter(f => f.name);
     }
 
@@ -924,7 +1045,13 @@
     const resultMacro = document.getElementById('resultMacro');
     const foodList = document.getElementById('foodList');
     const errorMsg = document.getElementById('errorMsg');
-    const fileInput = document.getElementById('fileInput');
+    const foodTextInput = document.getElementById('foodTextInput');
+    const foodTextStatus = document.getElementById('foodTextStatus');
+    const copyFoodExampleBtn = document.getElementById('copyFoodExample');
+    const mealConfigTextInput = document.getElementById('mealConfigTextInput');
+    const mealConfigTextStatus = document.getElementById('mealConfigTextStatus');
+    const copyMealConfigExampleBtn = document.getElementById('copyMealConfigExample');
+    const copyMealConfigBtn = document.getElementById('copyMealConfig');
     const emEnergyEl = document.getElementById('emEnergy');
     const emProteinEl = document.getElementById('emProtein');
     const emCarbsEl = document.getElementById('emCarbs');
@@ -978,73 +1105,224 @@
       if (el) el.addEventListener('change', updateTdee);
     });
 
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result;
-        try {
-          const lines = text.split(/\r?\n/);
-          const parsed = [];
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || trimmed.startsWith('#')) continue;
-            const parts = trimmed.split(/\s*\|\s*/).map(s => s.trim());
-            if (parts.length < 4) continue;
-            const name = parts[0];
-            const p = parseFloat(parts[1]) || 0;
-            const c = parseFloat(parts[2]) || 0;
-            const f = parseFloat(parts[3]) || 0;
-            const tags = parts[4] ? parts[4].split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
-            parsed.push(normalizeFood({ name, p, c, f, tags }));
-          }
-          uploadedFoods = parsed.filter(f => f.name);
-          buildSlotRows();
-          resultCard.classList.add('hidden');
-          errorMsg.classList.add('hidden');
-        } catch (err) {
-          errorMsg.textContent = '解析失败：' + err.message;
-          errorMsg.classList.remove('hidden');
-        }
-      };
-      reader.readAsText(file, 'UTF-8');
-      e.target.value = '';
-    });
-
-    const uploadZone = document.getElementById('uploadZone');
-    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
-    uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
-    uploadZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadZone.style.borderColor = '';
-      const file = e.dataTransfer && e.dataTransfer.files[0];
-      if (file) {
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        fileInput.files = dt.files;
-        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    });
-
-    document.getElementById('downloadExample').addEventListener('click', () => {
+    function getFoodExampleText() {
       const header = [
         '# 食物列表（每100g 生重）',
-        '# 格式：名称 | 蛋白质(g) | 碳水(g) | 脂肪(g) | 标签(多个用逗号分隔，可选)',
+        '# 格式：食物名 蛋白质：x 碳水：x 脂肪：x 标签：A，B',
+        '# 标签可不填，多个标签使用逗号分隔',
         '# 以 # 开头的行为注释，空行会被忽略',
         '#',
       ];
       const foodLines = DEFAULT_FOODS.map(f => {
-        const tags = (f.tags && f.tags.length) ? f.tags.join(',') : '';
-        return `${f.name} | ${f.p} | ${f.c} | ${f.f}${tags ? ' | ' + tags : ''}`;
+        const tags = (f.tags && f.tags.length) ? ` 标签：${f.tags.join('，')}` : '';
+        return `${f.name} 蛋白质：${f.p} 碳水：${f.c} 脂肪：${f.f}${tags}`;
       });
-      const lines = header.concat(foodLines);
-      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = '食物列表示例.txt';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      return header.concat(foodLines).join('\n');
+    }
+
+    function parseFoodText(text) {
+      const parsed = [];
+      const invalidLines = [];
+      text.split(/\r?\n/).forEach((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) return;
+        const numberPattern = '(\\d+(?:\\.\\d+)?|\\.\\d+)';
+        const pattern = new RegExp(`^(.+?)\\s*蛋白质\\s*[:：]\\s*${numberPattern}\\s+碳水\\s*[:：]\\s*${numberPattern}\\s+脂肪\\s*[:：]\\s*${numberPattern}(?:\\s+标签\\s*[:：]\\s*(.*))?$`);
+        const match = trimmed.match(pattern);
+        if (!match) {
+          invalidLines.push(index + 1);
+          return;
+        }
+        const values = [match[2], match[3], match[4]].map(Number);
+        const tags = match[5] ? match[5].split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+        parsed.push(normalizeFood({ name: match[1], p: values[0], c: values[1], f: values[2], tags }));
+      });
+      return { foods: parsed, invalidLines };
+    }
+
+    function applyFoodText() {
+      const text = foodTextInput.value.trim();
+      const previousState = typeof getSlotState === 'function' ? getSlotState() : [];
+      foodTextStatus.className = 'food-text-status';
+      if (!text) {
+        hasCustomFoodText = false;
+        uploadedFoods = [];
+        foodTextStatus.textContent = `当前使用内置食物库，共 ${DEFAULT_FOODS.length} 种`;
+      } else {
+        const { foods, invalidLines } = parseFoodText(text);
+        hasCustomFoodText = true;
+        uploadedFoods = foods;
+        if (invalidLines.length) {
+          foodTextStatus.classList.add('is-warning');
+          foodTextStatus.textContent = `已识别 ${foods.length} 种食物；第 ${invalidLines.slice(0, 4).join('、')} 行格式有误，已忽略${invalidLines.length > 4 ? '等错误行' : ''}`;
+        } else if (foods.length) {
+          foodTextStatus.classList.add('is-success');
+          foodTextStatus.textContent = `已应用 ${foods.length} 种食物，下面的选择已同步更新`;
+        } else {
+          foodTextStatus.classList.add('is-warning');
+          foodTextStatus.textContent = '没有识别到有效食物，请检查每行是否包含名称和 3 项营养数据';
+        }
+      }
+      buildSlotRows();
+      setSlotState(previousState);
+      resultCard.classList.add('hidden');
+      errorMsg.classList.add('hidden');
+    }
+
+    let foodTextTimer;
+    foodTextInput.addEventListener('input', () => {
+      clearTimeout(foodTextTimer);
+      foodTextTimer = setTimeout(applyFoodText, 250);
+    });
+
+    function getMealConfigExampleText() {
+      return [
+        '# 配餐配置：固定食物和槽位可放在同一个文本中',
+        '# 固定食物的份数可省略，默认为 1 份',
+        '乳清蛋白 蛋白质：24 碳水：3 脂肪：2 份数：1',
+        '脱脂牛奶 蛋白质：8 碳水：12 脂肪：0.5 份数：1.5',
+        '槽位1 类别：主食 食物：大米 最小重量：100g 最大重量：150g',
+        '槽位2 类别：禽畜肉 食物：鸡胸肉 最小重量：不限 最大重量：250g',
+        '槽位3 类别：随机 食物：随机 最小重量：不限 最大重量：不限',
+      ].join('\n');
+    }
+
+    function parseMealConfigText(text) {
+      const parsedFixedFoods = [];
+      const parsedSlots = [];
+      const invalidLines = [];
+      const numberPattern = '(\\d+(?:\\.\\d+)?|\\.\\d+)';
+      const fixedPattern = new RegExp(`^(.+?)\\s*蛋白质\\s*[:：]\\s*${numberPattern}\\s+碳水\\s*[:：]\\s*${numberPattern}\\s+脂肪\\s*[:：]\\s*${numberPattern}(?:\\s+份数\\s*[:：]\\s*${numberPattern})?$`);
+      const weightPattern = '(不限|\\d+(?:\\.\\d+)?(?:g|克)?)';
+      const slotPattern = new RegExp(`^槽位\\s*(\\d+)\\s+类别\\s*[:：]\\s*(.+?)\\s+食物\\s*[:：]\\s*(.+?)\\s+最小重量\\s*[:：]\\s*${weightPattern}\\s+最大重量\\s*[:：]\\s*${weightPattern}$`);
+      const parseWeight = value => value === '不限' ? '' : value.replace(/(?:g|克)$/i, '');
+
+      text.split(/\r?\n/).forEach((line, lineIndex) => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) return;
+        const slotMatch = trimmed.match(slotPattern);
+        if (slotMatch) {
+          parsedSlots.push({
+            index: Number(slotMatch[1]),
+            source: slotMatch[2] === '随机' ? '' : slotMatch[2].trim(),
+            food: slotMatch[3] === '随机' ? '' : slotMatch[3].trim(),
+            min: parseWeight(slotMatch[4]),
+            max: parseWeight(slotMatch[5]),
+          });
+          return;
+        }
+        const fixedMatch = trimmed.match(fixedPattern);
+        if (fixedMatch) {
+          parsedFixedFoods.push({
+            name: fixedMatch[1].trim(),
+            p: Number(fixedMatch[2]),
+            c: Number(fixedMatch[3]),
+            f: Number(fixedMatch[4]),
+            servings: fixedMatch[5] === undefined ? 1 : Number(fixedMatch[5]),
+          });
+          return;
+        }
+        invalidLines.push(lineIndex + 1);
+      });
+      return { fixedFoods: parsedFixedFoods, slots: parsedSlots, invalidLines };
+    }
+
+    function getFixedMacroTotals() {
+      return fixedFoods.reduce((totals, food) => {
+        totals.p += food.p * food.servings;
+        totals.c += food.c * food.servings;
+        totals.f += food.f * food.servings;
+        return totals;
+      }, { p: 0, c: 0, f: 0 });
+    }
+
+    function applyMealConfigText() {
+      const text = mealConfigTextInput.value.trim();
+      mealConfigTextStatus.className = 'food-text-status';
+      if (!text) {
+        fixedFoods = [];
+        mealConfigTextStatus.textContent = '当前未使用文本配置；下方槽位仍可手动调整';
+      } else {
+        const parsed = parseMealConfigText(text);
+        fixedFoods = parsed.fixedFoods;
+        if (parsed.slots.length) {
+          const maxSlotIndex = Math.max(...parsed.slots.map(slot => slot.index));
+          const importedState = Array.from({ length: maxSlotIndex }, () => ({ source: '', food: '', min: '', max: '' }));
+          parsed.slots.forEach(slot => {
+            if (slot.index > 0) importedState[slot.index - 1] = slot;
+          });
+          slotCount = Math.max(SLOT_COUNT_MIN, importedState.length);
+          buildSlotRows();
+          setSlotState(importedState);
+        }
+        const totals = getFixedMacroTotals();
+        const totalText = `合计蛋白质 ${totals.p.toFixed(1)}g、碳水 ${totals.c.toFixed(1)}g、脂肪 ${totals.f.toFixed(1)}g`;
+        if (parsed.invalidLines.length) {
+          mealConfigTextStatus.classList.add('is-warning');
+          mealConfigTextStatus.textContent = `已应用 ${fixedFoods.length} 种固定食物和 ${parsed.slots.length} 个槽位；第 ${parsed.invalidLines.slice(0, 4).join('、')} 行格式有误，已忽略。${totalText}`;
+        } else if (fixedFoods.length || parsed.slots.length) {
+          mealConfigTextStatus.classList.add('is-success');
+          mealConfigTextStatus.textContent = `已应用 ${fixedFoods.length} 种固定食物和 ${parsed.slots.length} 个槽位；${totalText}`;
+        } else {
+          mealConfigTextStatus.classList.add('is-warning');
+          mealConfigTextStatus.textContent = '没有识别到固定食物或槽位，请检查文本格式';
+        }
+      }
+      resultCard.classList.add('hidden');
+      errorMsg.classList.add('hidden');
+    }
+
+    let mealConfigTextTimer;
+    mealConfigTextInput.addEventListener('input', () => {
+      clearTimeout(mealConfigTextTimer);
+      mealConfigTextTimer = setTimeout(applyMealConfigText, 250);
+    });
+
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const helper = document.createElement('textarea');
+      helper.value = text;
+      helper.setAttribute('readonly', '');
+      helper.style.position = 'fixed';
+      helper.style.opacity = '0';
+      document.body.appendChild(helper);
+      helper.select();
+      const copied = document.execCommand('copy');
+      helper.remove();
+      if (!copied) throw new Error('copy failed');
+    }
+
+    copyFoodExampleBtn.addEventListener('click', async () => {
+      const originalLabel = copyFoodExampleBtn.textContent;
+      try {
+        await copyText(getFoodExampleText());
+        copyFoodExampleBtn.textContent = '已复制';
+        foodTextStatus.className = 'food-text-status is-success';
+        foodTextStatus.textContent = '示例已复制，可粘贴到文本框后直接修改';
+      } catch (err) {
+        copyFoodExampleBtn.textContent = '复制失败';
+        foodTextStatus.className = 'food-text-status is-warning';
+        foodTextStatus.textContent = '浏览器未允许读取剪贴板，请稍后重试或手动输入';
+      }
+      setTimeout(() => { copyFoodExampleBtn.textContent = originalLabel; }, 1600);
+    });
+
+    copyMealConfigExampleBtn.addEventListener('click', async () => {
+      const originalLabel = copyMealConfigExampleBtn.textContent;
+      try {
+        await copyText(getMealConfigExampleText());
+        copyMealConfigExampleBtn.textContent = '已复制';
+        mealConfigTextStatus.className = 'food-text-status is-success';
+        mealConfigTextStatus.textContent = '完整示例已复制，可粘贴到上方文本框后修改';
+      } catch (err) {
+        copyMealConfigExampleBtn.textContent = '复制失败';
+        mealConfigTextStatus.className = 'food-text-status is-warning';
+        mealConfigTextStatus.textContent = '浏览器未允许读取剪贴板，请稍后重试或手动输入';
+      }
+      setTimeout(() => { copyMealConfigExampleBtn.textContent = originalLabel; }, 1600);
     });
 
     const SLOT_COUNT_MIN = 3;
@@ -1076,7 +1354,7 @@
         slotSourceSelects[i].value = s.source;
         if (s.source) {
           const list = foodsByTag(s.source);
-          slotFoodSelects[i].innerHTML = '<option value="">随机</option>' + list.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+          slotFoodSelects[i].innerHTML = '<option value="">随机</option>' + list.map(f => `<option value="${escapeHtml(f.name)}">${escapeHtml(f.name)}</option>`).join('');
           slotFoodSelects[i].disabled = false;
           slotFoodSelects[i].value = s.food || '';
         } else {
@@ -1105,7 +1383,7 @@
         const srcSel = document.createElement('select');
         srcSel.dataset.slot = i;
         srcSel.setAttribute('aria-label', '槽位' + (i + 1) + '来源');
-        srcSel.innerHTML = '<option value="">随机</option>' + tags.map(t => `<option value="${t}">${t}</option>`).join('');
+        srcSel.innerHTML = '<option value="">随机</option>' + tags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
         const foodSel = document.createElement('select');
         foodSel.dataset.slot = i;
         foodSel.setAttribute('aria-label', '槽位' + (i + 1) + '具体食物');
@@ -1169,7 +1447,7 @@
             return;
           }
           const list = foodsByTag(tag);
-          foodSel.innerHTML = '<option value="">随机</option>' + list.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+          foodSel.innerHTML = '<option value="">随机</option>' + list.map(f => `<option value="${escapeHtml(f.name)}">${escapeHtml(f.name)}</option>`).join('');
           foodSel.disabled = false;
         });
       });
@@ -1181,6 +1459,38 @@
       slotCount++;
       buildSlotRows();
       setSlotState(state);
+    });
+
+    function getMealConfigText() {
+      const lines = ['# 配餐配置：可粘贴回“配餐文本配置”中恢复使用'];
+      fixedFoods.forEach(food => {
+        lines.push(`${food.name} 蛋白质：${food.p} 碳水：${food.c} 脂肪：${food.f} 份数：${food.servings}`);
+      });
+      getSlotState().forEach((slot, index) => {
+        const source = slot.source || '随机';
+        const food = slot.food || '随机';
+        const min = slot.min === '' ? '不限' : `${slot.min}g`;
+        const max = slot.max === '' ? '不限' : `${slot.max}g`;
+        lines.push(`槽位${index + 1} 类别：${source} 食物：${food} 最小重量：${min} 最大重量：${max}`);
+      });
+      return lines.join('\n');
+    }
+
+    copyMealConfigBtn.addEventListener('click', async () => {
+      clearTimeout(mealConfigTextTimer);
+      fixedFoods = parseMealConfigText(mealConfigTextInput.value.trim()).fixedFoods;
+      const originalLabel = copyMealConfigBtn.textContent;
+      try {
+        await copyText(getMealConfigText());
+        copyMealConfigBtn.textContent = '已复制';
+        mealConfigTextStatus.className = 'food-text-status is-success';
+        mealConfigTextStatus.textContent = `已复制 ${fixedFoods.length} 种固定食物和 ${slotSourceSelects.length} 个槽位，可粘贴回此文本框恢复`;
+      } catch (err) {
+        copyMealConfigBtn.textContent = '复制失败';
+        mealConfigTextStatus.className = 'food-text-status is-warning';
+        mealConfigTextStatus.textContent = '浏览器未允许读取剪贴板，请稍后重试';
+      }
+      setTimeout(() => { copyMealConfigBtn.textContent = originalLabel; }, 1600);
     });
 
     let emAutoLockedIndex = null; // 0: 能量, 1: 蛋白质, 2: 碳水, 3: 脂肪
@@ -1565,14 +1875,24 @@
     }
 
     function generate() {
-      const targetP = parseFloat(proteinEl.value) || 0;
-      const targetC = parseFloat(carbsEl.value) || 0;
-      const targetF = parseFloat(fatEl.value) || 0;
+      const goalP = parseFloat(proteinEl.value) || 0;
+      const goalC = parseFloat(carbsEl.value) || 0;
+      const goalF = parseFloat(fatEl.value) || 0;
       resultCard.classList.add('hidden');
       errorMsg.classList.add('hidden');
 
-      if (targetP <= 0 || targetC <= 0 || targetF <= 0) {
+      if (goalP <= 0 || goalC <= 0 || goalF <= 0) {
         errorMsg.textContent = '请填写大于 0 的蛋白质、碳水、脂肪目标（克）。';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      const fixedTotals = getFixedMacroTotals();
+      const targetP = goalP - fixedTotals.p;
+      const targetC = goalC - fixedTotals.c;
+      const targetF = goalF - fixedTotals.f;
+      if (targetP <= 0 || targetC <= 0 || targetF <= 0) {
+        errorMsg.textContent = `固定食物已达到或超过目标（固定合计：蛋白质 ${fixedTotals.p.toFixed(1)}g、碳水 ${fixedTotals.c.toFixed(1)}g、脂肪 ${fixedTotals.f.toFixed(1)}g），请减少固定食物份数或提高目标。`;
         errorMsg.classList.remove('hidden');
         return;
       }
@@ -1722,26 +2042,42 @@
         sumC += sel[i].c * g;
         sumF += sel[i].f * g;
       }
-      const totalCalOut = sumP * CAL_PROTEIN + sumC * CAL_CARBS + sumF * CAL_FAT;
+      const finalP = sumP + fixedTotals.p;
+      const finalC = sumC + fixedTotals.c;
+      const finalF = sumF + fixedTotals.f;
+      const totalCalOut = finalP * CAL_PROTEIN + finalC * CAL_CARBS + finalF * CAL_FAT;
       resultMacro.innerHTML = `
-        <span class="macro-pill">蛋白质 <span>${sumP.toFixed(1)}</span> g</span>
-        <span class="macro-pill">碳水 <span>${sumC.toFixed(1)}</span> g</span>
-        <span class="macro-pill">脂肪 <span>${sumF.toFixed(1)}</span> g</span>
+        <span class="macro-pill">蛋白质 <span>${finalP.toFixed(1)}</span> g</span>
+        <span class="macro-pill">碳水 <span>${finalC.toFixed(1)}</span> g</span>
+        <span class="macro-pill">脂肪 <span>${finalF.toFixed(1)}</span> g</span>
         <span class="macro-pill">热量 <span>${Math.round(totalCalOut)}</span> kcal</span>
       `;
-      foodList.innerHTML = sel.map((food, i) => {
+      const fixedFoodItems = fixedFoods.map(food => {
+        const p = (food.p * food.servings).toFixed(1);
+        const c = (food.c * food.servings).toFixed(1);
+        const f = (food.f * food.servings).toFixed(1);
+        return `
+          <li class="food-item">
+            <span class="food-name">${escapeHtml(food.name)}</span>
+            <span class="food-gram">${food.servings} 份</span>
+            <span class="food-detail">固定 · 蛋白质 ${p} g · 碳水 ${c} g · 脂肪 ${f} g</span>
+          </li>
+        `;
+      });
+      const generatedFoodItems = sel.map((food, i) => {
         const g = amounts[i];
         const p = (food.p * g / 100).toFixed(1);
         const c = (food.c * g / 100).toFixed(1);
         const f = (food.f * g / 100).toFixed(1);
         return `
           <li class="food-item">
-            <span class="food-name">${food.name}</span>
+            <span class="food-name">${escapeHtml(food.name)}</span>
             <span class="food-gram">${Math.round(g)} g</span>
             <span class="food-detail">蛋白质 ${p} g · 碳水 ${c} g · 脂肪 ${f} g</span>
           </li>
         `;
-      }).join('');
+      });
+      foodList.innerHTML = fixedFoodItems.concat(generatedFoodItems).join('');
       resultCard.classList.remove('hidden');
     }
 
